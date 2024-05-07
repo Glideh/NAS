@@ -5,11 +5,12 @@
 | **Processeur**           | AMD Athlon 220GE (30€)                  |  30€ | Plan sur leboncoin                                     |
 | **Carte mère**           | Gigabyte B450 Aorus Elite V2            | 110€ | Pas toujours évident à trouver                         |
 | **Alimentation**         | Be Quiet! Pure Power 11 - 500W - Gold   |  80€ |                                                        |
-| **HBA**                  | [Broadcom / LSI SAS 9300-16i](https://fr.aliexpress.com/item/1005005203882356.html)             |  63€ | Pour brancher 16 disques                               |
+| **HBA**                  | [LSI SAS 9300-16i](https://fr.aliexpress.com/item/1005005203882356.html)             |  63€ | Pour brancher 16 disques en SAS 3                              |
+| **HBA**                  | [LSI SAS 9211-8i](https://fr.aliexpress.com/item/1005005028899772.html)             |  26€ | Pour brancher 8 disques en SAS 2                              |
 | **RAM**                  | Corsair Vengeance LPX 3600 MHz par 16Go |  37€ | 8 gigs peuvent suffire même pour Plex                  |
 | **NVMe**                 | Crucial 500Go                           |  35€ |                                                        |
 | **Splitters d'alim**     | [Aliex SATA 1 -> 3](https://fr.aliexpress.com/item/1005005766877776.html)                       |   2€ | SATA mieux que Molex                                   |
-| **Câbles de données**    | [Aliex SFF 8643 -> SFF 8482](https://fr.aliexpress.com/item/1005004937995975.html)              |   8€ | Par câble pour 4 disques                               |
+| **Câbles de données**    | [Aliex **SFF 8643** -> **SFF 8482**](https://fr.aliexpress.com/item/1005004937995975.html)              |   8€ | Par câble pour 4 disques                               |
 | **Ventilateur CPU**      | [Aliex AMD EOM](https://fr.aliexpress.com/item/1005005228000756.html)                           |  13€ | Low profile, le 220GE chauffe très peu                 |
 | **Adaptateur disque**    | [Aliex 5.25" -> 3.5"-> 2.5"](https://www.aliexpress.com/item/4000087318148.html)              |   7€ | Pour baie 5.25"                                        |
 | **Ventilos 12"**         | [Younuon 4 pin PWM](https://fr.aliexpress.com/item/4000561653138.html)                       |   9€ | Semblent bruyants, comparer avec Noctua                |
@@ -70,7 +71,7 @@ Pour ventiler le HBA il est possible d'utiliser ce type d'adaptateur qui se fixe
 
 # Fixation des disques
 
-L'idéal est de les fixer dans la facade pour pouvoir les ventiler plus facilement (les SSD chauffent plus que les HDD)
+À défaut de disposer d'une cage avec fond de panier ([backplane](https://www.monsieurcyberman.com/fr/95-backplane-serveur)) comme dans les machines 19" d'entreprise, l'idéal est de les fixer dans la facade pour pouvoir les ventiler plus facilement (les SSD chauffent plus que les HDD)
 
 ![Pour les SSD dans l'adaptateur 5.25"](images/adapter-525.png)
 
@@ -81,6 +82,64 @@ Il existe aussi ce type de cages:
 # Raid
 
 Il est possible de faire du Raid classique ou du RaidZ
+
+## Raid classique
+
+## RaidZ
+
+Plus d'informations [ici](https://resinfo-gt.pages.in2p3.fr/zfs/doc/index.html)
+
+- Installer les outils
+
+```bash
+$ sudo apt install zfsutils-linux
+```
+
+- Nommer les disques (pour éviter d'utiliser la forme `sdx` qui peut changer et pouvoir les retrouver plus facilement dans le boitier)
+
+```bash
+$ nano /etc/zfs/vdev_id.conf
+```
+
+```bash
+alias SSD11 scsi-SNETAPP_X439_PHM23T0MCTO_75P0A056G32B
+alias SSD12 scsi-SNETAPP_X439_PHM23T0MCTO_85D0A00IG32B
+alias SSD13 scsi-SNETAPP_X439_PHM23T0MCTO_85D0A00NG32B
+alias SSD14 scsi-SNETAPP_X439_PHM23T0MCTO_65L0A00BG32B
+alias SSD21 scsi-SNETAPP_X439_PHM23T0MCTO_85F0A04FG32B
+alias SSD22 scsi-SNETAPP_X439_PHM23T0MCTO_65M0A040G32B
+alias SSD23 scsi-SNETAPP_X439_PHM23T0MCTO_65L0A00FG32B
+alias SSD24 scsi-SNETAPP_X439_PHM23T0MCTO_75P0A01BG32B
+alias SSD31 scsi-SNETAPP_X439_PHM23T0MCTO_Y5M0A034G32B
+alias SSD32 scsi-SNETAPP_X439_PHM23T0MCTO_65L0A01DG32B
+alias SSD33 scsi-SNETAPP_X439_PHM23T0MCTO_65L0A02DG32B
+alias SSD34 scsi-SNETAPP_X439_PHM23T0MCTO_X5O0A03TG32B
+alias SSD41 scsi-SNETAPP_X439_PHM23T0MCTO_7580A071G32B
+alias SSD42 scsi-SNETAPP_X439_PHM23T0MCTO_85F0A03UG32B
+alias SSD43 scsi-SNETAPP_X439_PHM23T0MCTO_65M0A020G32B
+alias SSD44 scsi-SNETAPP_X439_PHM23T0MCTO_85D0A01PG32B
+```
+
+Ici les disques ont été nommés sous la forme SSD**XY**
+- **X** étant le connecteur mini SAS du HBA
+- **Y** le connecteur **SFF-8482** en général identifié avec une étiquette
+
+![SFF-8482 identifiés](images/SFF-8482-identifier.png)
+
+- Prendre en compte nos vdevs renommés
+
+```bash
+sudo udevadm trigger
+```
+
+- Créer les volumes
+
+```bash
+sudo zpool create volume1 raidz SSD41 SSD42 SSD43 SSD44 SSD33 SSD34
+sudo zpool create volume2 raidz SSD11 SSD12 SSD13 SSD14 SSD21 SSD22 SSD23 SSD24 SSD31 SSD32
+```
+
+- Les volumes sont maintenant visibles et utilisables dans `/volume1` & `/volume2`
 
 # Surveillance
 
@@ -150,7 +209,7 @@ volumes:
     grafana-data:
 ```
 
-- `node-exporter` récupère les métriques classiques du système, il doit tourner sur l'hôte pour avoir accès au matériel de manière non cloisonnée
+- `node-exporter` récupère les métriques classiques du système, il doit tourner directement sur le contexte de l'hôte pour avoir accès au matériel de manière non cloisonnée
 - `smartctl-exporter` récupère les métriques des disques
 - `prometheus` rassemble les données et les met à disposition de Grafana
 - `grafana` vient lire les données sur Prometheus
@@ -172,4 +231,5 @@ scrape_configs:
       - smartctl-exporter:9633
 ```
 
-Comme `node-exporter` tourne sur l'hôte on utilise ici l'IP de l'hôte 172.17.0.1 par défaut définie par Docker. On est censé [pouvoir y accéder par ](https://stackoverflow.com/a/24326540/305189)`host.docker.internal` mais ça n'a pas fonctionné chez moi.
+Comme `node-exporter` tourne sur l'hôte on utilise ici l'IP de l'hôte 172.17.0.1 par défaut définie par Docker.  
+On est censé [pouvoir y accéder par `host.docker.internal`](https://stackoverflow.com/a/24326540/305189) mais ça n'a pas fonctionné chez moi.
