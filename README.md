@@ -13,14 +13,14 @@
 | **Câbles de données**    | [Aliex **SFF 8643** -> **SFF 8482**](https://fr.aliexpress.com/item/1005004937995975.html)              |   8€ | Par câble pour 4 disques                               |
 | **Ventilateur CPU**      | [Aliex AMD EOM](https://fr.aliexpress.com/item/1005005228000756.html)                           |  13€ | Low profile, le 220GE chauffe très peu                 |
 | **Adaptateur disque**    | [Aliex 5.25" -> 3.5"-> 2.5"](https://www.aliexpress.com/item/4000087318148.html)              |   7€ | Pour baie 5.25"                                        |
-| **Ventilos 12"**         | [Younuon 4 pin PWM](https://fr.aliexpress.com/item/4000561653138.html)                       |   9€ | Semblent bruyants, comparer avec Noctua                |
+| **Ventilos 12cm**         | [Younuon 4 pin PWM](https://fr.aliexpress.com/item/4000561653138.html)                       |   9€ | Semblent bruyants, comparer avec Noctua                |
 | **Rivets ventilos**      | [Aliex caoutchouc \*20](https://fr.aliexpress.com/item/1005002787135032.html)                    |   3€ |                                                        |
 | **Chassis pour ventilo** | [Aliex adaptateur sur slot](https://fr.aliexpress.com/item/1005005868217402.html)               |   3€ | Pour ventiler le HBA                                   |
 | **Splitter de ventilo**  | [Aliex 1 -> 2](https://fr.aliexpress.com/item/1005004621361878.html)                            |   1€ | La carte mère n'a que 4 connecteurs dont 1 pour le CPU |
 
-# Le controlleur SAS: HBA
+# Le contrôleur SAS: HBA
 
-Le HBA est la carte qui permet à la carte mère de communiquer en SAS. Les cartes mères grand publique ne gèrent que le SATA par défaut.
+Le HBA est le contrôleur qui permet à la carte mère de communiquer en SAS. Les cartes mères grand publique ne gèrent que le SATA par défaut.
 
 Le nom de code de la carte est en général de cette forme: **9XYY-Zi**
 
@@ -33,7 +33,7 @@ Exemples:
 - **9300-16i** SAS**3**, **première** révision, **16** disques (4 connecteurs "mini SAS")
 - **9217-8i** SAS**2**, révision **17**, **8** disques (2 connecteurs)
 
-Attention ces cartes peuvent atteindre \~80° non ventilées, penser à y mettre un 12" dédié avec un adaptateur slot (50° ventilée), même si elle est censé supporter jusqu'à 110°
+Attention ces cartes peuvent atteindre \~80° sans ventilation, penser à y mettre un 12cm dédié avec un adaptateur slot (50° ventilée), même si elle est censé supporter jusqu'à 110°
 
 ## SAS 3
 
@@ -47,7 +47,7 @@ Cette carte possède 4 connecteurs mini SAS (**SFF 8643**) qui permettent de bra
 
 ## SAS 2
 
-Le SAS 3 permet théoriquement d'atteindre 6Gb/s
+Le SAS 3 permet théoriquement d'atteindre **6Gb/s**
 
 Exemple de HBA SAS 2: **LSI SAS 9211-8i**
 
@@ -55,25 +55,25 @@ Exemple de HBA SAS 2: **LSI SAS 9211-8i**
 
 Sur cette carte on peut voir 2 connecteurs **SFF-8087** qui est l'ancien format du mini SAS mais encore très répandu à priori. Donc ici il est possible de brancher 8 disques.
 
-# Ventilation
+## Expander
 
-Faire entrer l'air par l'avant sur les disques et le faire sortir à l'arrière et/ou vers le haut
+Il est aussi possible d'étendre le nombre de connecteurs avec une carte dédiée.  
 
-![Flux d'air](images/ventilation.png)
+Exemple de SAS expander
 
-Attention à l'orientation des ventilos, on peut la voir en général en relief
+![SAS Expander](images/sas-expander.webp)
 
-![Orientation](images/fan-direction.png)
+Ici, les 2 connecteurs du haut Port 0 et Port 1 sont des entrées (à brancher sur des sorties du HBA), une seule peut suffire mais il faut s'assurer que le débit est suffisant.
 
-Pour ventiler le HBA il est possible d'utiliser ce type d'adaptateur qui se fixe sur un slot du boitier (au niveau des PCI):
-
-![Adaptateur pour ventiler le HBA](images/adapter-fan-slot.png)
+Il faut savoir que les SAS expanders n'utilisent le slot PCIe que pour l'alimentation, les données transitent par le HBA avant d'arriver sur les ports d'entrée.
 
 # Fixation des disques
 
-À défaut de disposer d'une cage avec fond de panier ([backplane](https://www.monsieurcyberman.com/fr/95-backplane-serveur)) comme dans les machines 19" d'entreprise, l'idéal est de les fixer dans la facade pour pouvoir les ventiler plus facilement (les SSD chauffent plus que les HDD)
+À défaut de disposer d'une cage avec fond de panier ([backplane](https://www.monsieurcyberman.com/fr/95-backplane-serveur)) comme dans les machines 19" d'entreprise, l'idéal est de les fixer dans la facade pour pouvoir les ventiler plus facilement (surtout pour les SSD qui chauffent plus)
 
 ![Pour les SSD dans l'adaptateur 5.25"](images/adapter-525.png)
+
+Cette platine 5.25" permet de visser 2 ou 4 SSD (je préfère me limiter à 2 pour permettre aux disques de respirer) ou un HDD au milieu
 
 Il existe aussi ce type de cages:
 
@@ -151,6 +151,8 @@ Plusieurs choses sont intéressantes à surveiller, exemples:
   - CPU
 - L'état des raids
 - Les débits réseau entrant et sortant
+
+## Prometheus & Grafana
 
 2 outils sont mis à contribution **Prometheus** pour la récupération des données et **Grafana** pour l'affichage
 
@@ -233,3 +235,183 @@ scrape_configs:
 
 Comme `node-exporter` tourne sur l'hôte on utilise ici l'IP de l'hôte 172.17.0.1 par défaut définie par Docker.  
 On est censé [pouvoir y accéder par `host.docker.internal`](https://stackoverflow.com/a/24326540/305189) mais ça n'a pas fonctionné chez moi.
+
+## Températures
+
+Depuis un terminal il est possible de voir les températures de toutes les sondes (HBA, disques, processeur, NVMe, etc.)
+
+### HBA
+
+Si le HBA est un LSI il faut installer l'outil Storcli de Broadcom:
+
+- Récupérer l'archive qui contient tous les builds depuis [le site de Broadcom](https://docs.broadcom.com/docs/1232743501) (accepter les conditions)
+- Localiser le package correspondant à la distrib Linux
+- Installer le package (ici pour Ubuntu)
+```
+sudo dpkg -i ./storcli_007.2707.0000.0000_all.deb
+```
+- L'exécutable sera installé dans `/opt/MegaRAID/storcli/storcli64`
+- Utiliser l'exécutable
+```
+sudo /opt/MegaRAID/storcli/storcli64 /c0 show temperature
+```
+`/c0` correspond au premier HBA, attention le **9300-16i** contient 2 modules (1 pour 2 connecteurs SAS) et donc 2 sondes de température
+- Pour voir le 2ème
+```
+sudo /opt/MegaRAID/storcli/storcli64 /c1 show temperature
+```
+
+Exemple:
+
+```
+$ sudo /opt/MegaRAID/storcli/storcli64 /c0 show temperature | grep temp
+
+ROC temperature(Degree Celsius) 51
+```
+_Le premier module est ici à 51°_
+
+### Disques
+
+La récupération des détails des disques peut se faire avec le package `smartmontools`
+
+- Installer `smartmontools`
+```
+sudo apt install smartmontools
+```
+- Lire les détails sur un \<disque\>
+```
+sudo smartctl -A /dev/disk/by-vdev/<disque>
+```
+- Récupérer la température actuelle
+```
+sudo smartctl -A /dev/disk/by-vdev/<disque> | grep "Drive Temp"
+```
+
+Exemple:
+
+```
+$ sudo smartctl -A /dev/disk/by-vdev/SSD11
+
+Current Drive Temperature:     32 C
+```
+
+Exemple de script shell pour récupérer les températures de 16 disques nommés `SSD<XY>`
+
+```sh
+#!/bin/bash
+for y in 1 2 3 4
+do
+    for x in 1 2 3 4
+    do
+#        smartctl -a /dev/disk/by-vdev/SSD$x$y
+         temp=`smartctl -A /dev/disk/by-vdev/SSD$x$y | grep "Drive Temp" | sed -n "s/^.*\:\s*//p" | sed -n "s/ C$//p"`
+         echo -n "SSD$x$y: $temp°   "
+         [ "$x" = "4" ] && echo ""
+    done
+done
+```
+
+Résultat:
+
+```
+SSD11: 33°   SSD21: 29°   SSD31: 32°   SSD41: 32°   
+SSD12: 32°   SSD22: 31°   SSD32: 27°   SSD42: 29°   
+SSD13: 30°   SSD23: 30°   SSD33: 26°   SSD43: 28°   
+SSD14: 29°   SSD24: 29°   SSD34: 27°   SSD44: 27°   
+```
+
+### Autres composants
+
+Les autres composants peuvent être vérifiés à l'aide `lm-sensors`
+
+- Installer `lm-sensors`
+
+```
+sudo apt install lm-sensors
+```
+
+- Lancer la détection des composants
+
+```
+sudo sensors-detect
+```
+
+- Laisser les réponses par défaut
+- Répondre seulement **yes** à la question
+
+> Do you want to add these lines automatically to /etc/modules?
+
+- Lire les résultats
+
+```
+sensors
+```
+
+Exemple:
+
+```
+$ sensors
+
+amdgpu-pci-0c00
+Adapter: PCI adapter
+vddgfx:           N/A  
+vddnb:            N/A  
+edge:         +26.0°C  
+
+it8792-isa-0a60
+Adapter: ISA adapter
+in0:           1.79 V  (min =  +0.00 V, max =  +2.78 V)
+in1:           1.30 V  (min =  +0.00 V, max =  +2.78 V)
+in2:           1.19 V  (min =  +0.00 V, max =  +2.78 V)
++3.3V:         3.36 V  (min =  +0.00 V, max =  +5.56 V)
+in4:           1.27 V  (min =  +0.00 V, max =  +2.78 V)
+in5:           1.15 V  (min =  +0.00 V, max =  +2.78 V)
+in6:           2.78 V  (min =  +0.00 V, max =  +2.78 V)  ALARM
+3VSB:          3.33 V  (min =  +0.00 V, max =  +5.56 V)
+Vbat:          3.10 V  
+fan1:           0 RPM  (min =    0 RPM)
+fan2:           0 RPM  (min =    0 RPM)
+fan3:           0 RPM  (min =    0 RPM)
+temp1:        +29.0°C  (low  = +127.0°C, high = +127.0°C)  sensor = thermistor
+temp2:        +36.0°C  (low  = +127.0°C, high = +127.0°C)  sensor = thermistor
+temp3:        +35.0°C  (low  = +127.0°C, high = +127.0°C)  sensor = thermistor
+intrusion0:  ALARM
+
+acpitz-acpi-0
+Adapter: ACPI interface
+temp1:        +16.8°C  
+
+k10temp-pci-00c3
+Adapter: PCI adapter
+Tctl:         +26.4°C  
+
+nvme-pci-0b00
+Adapter: PCI adapter
+Composite:    +34.9°C  (low  =  -0.1°C, high = +84.8°C)
+                       (crit = +94.8°C)
+Sensor 1:     +34.9°C  (low  = -273.1°C, high = +65261.8°C)
+Sensor 2:     +40.9°C  (low  = -273.1°C, high = +65261.8°C)
+Sensor 8:     +34.9°C  (low  = -273.1°C, high = +65261.8°C)
+```
+
+# Ventilation
+
+Faire entrer l'air par l'avant sur les disques et le faire sortir à l'arrière et/ou vers le haut
+
+![Flux d'air](images/ventilation.png)
+
+Attention à l'orientation des ventilos, on peut la voir en général en relief
+
+![Orientation](images/fan-direction.png)
+
+Pour ventiler le HBA il est possible d'utiliser ce type d'adaptateur qui se fixe sur un slot du boitier (au niveau des PCI):
+
+![Adaptateur pour ventiler le HBA](images/adapter-fan-slot.png)
+
+Avec cet adaptateur, il est possible de chainer 2 ventilateurs côte à côte.
+
+## PWM
+
+La gestion de la vitesse des ventilateurs est normalement possible avec `pwmconfig` (qui est installé avec `lm-sensors` mentionné dans les [Autres composants](#autres-composants))
+
+Mais je n'ai pas réussi à récupérer quoique ce soit avec la carte mère **B450 AORUS ELITE V2**
