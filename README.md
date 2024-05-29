@@ -6,7 +6,7 @@ Nous avons essayé de trouver un bon compromis budget (~**500€**) / performanc
 
 |                      | Modèle                                  | Prix |                                                        |
 |----------------------|-----------------------------------------|-----:|--------------------------------------------------------|
-| **Processeur**           | AMD Athlon 220GE (30€)                  |  30€ | Plan sur leboncoin                                     |
+| **Processeur**           | AMD Athlon 220GE                  |  ~50€ | Faible consommation et suffisamment récent                          |
 | **Carte mère**           | Gigabyte B450 Aorus Elite V2            | 110€ | Pas toujours évident à trouver                         |
 | **Alimentation**         | Be Quiet! Pure Power 11 - 500W - Gold   |  80€ |                                                        |
 | **HBA**                  | [LSI SAS 9300-16i](https://fr.aliexpress.com/item/1005005203882356.html)             |  63€ | Pour brancher 16 disques en SAS 3                              |
@@ -22,6 +22,8 @@ Nous avons essayé de trouver un bon compromis budget (~**500€**) / performanc
 | **Rivets ventilos**      | [Aliex caoutchouc \*20](https://fr.aliexpress.com/item/1005002787135032.html)                    |   3€ |                                                        |
 | **Chassis pour ventilo** | [Aliex adaptateur sur slot](https://fr.aliexpress.com/item/1005005868217402.html)               |   3€ | Pour ventiler le HBA                                   |
 | **Splitter de ventilo**  | [Aliex 1 -> 2](https://fr.aliexpress.com/item/1005004621361878.html)                            |   1€ | La carte mère n'a que 4 connecteurs dont 1 pour le CPU |
+| **Carte réseau 10Gb**  | [Aliex Intel X520](https://fr.aliexpress.com/item/1005005503868174.html)                            |   35€ |  |
+| **Câble DAC**  | [Aliex 3 mètres](https://fr.aliexpress.com/item/1005006118860005.html)                            |   13€ |  |
 
 # Le contrôleur SAS: HBA
 
@@ -424,3 +426,25 @@ Avec cet adaptateur, il est possible de chainer 2 ventilateurs côte à côte.
 La gestion de la vitesse des ventilateurs est normalement possible avec `pwmconfig` (qui est installé avec `lm-sensors` mentionné dans les [Autres composants](#autres-composants))
 
 Mais je n'ai pas réussi à récupérer quoique ce soit avec la carte mère **B450 AORUS ELITE V2**
+
+# Réseau
+
+Le **SAS 3** permet un débit théorique de 1Go/s. En pratique j'ai pu atteindre **500Mo/s** en écriture avec SSD SAS 3 (simple rsync d'un gros fichier et sans raid).
+
+Avec la bonne boite internet (exemple Freebox Delta), il suffit donc d'avoir une **carte réseau 10Gb** avec le bon câble pour permettre une vitesse de téléchargement élevée.
+
+En termes d'interface, il existe des **cartes SFP+** à 35€ sur Aliexpress (exemple en lien dans le tableau du matériel)
+
+![Carte SFP+](images/interface-sfp+.webp)
+
+Attention ces interfaces grand publique **ne gèrent pas le WOL**, j'ai personnellement laissé l'ethernet 1Gb intégré à la carte mère branché pour garder cette fonctionnalité.
+
+Si la machine n'est pas trop éloignée du routeur (pas plus de **10m**) l'idéal est d'utiliser un **câble DAC**. Il a l'avantage de moins faire consommer et moins chauffer les interfaces. Sinon il faut passer sur de la fibre qui requiert des modules de chaque coté pour convertir le signal électrique en lumière et inversement.
+
+Ici un DAC sur Aliexpress (3m -> **13€**)
+
+![DAC](images/dac.webp)
+
+Test de débit avec Speedtest
+
+![Speedtest](images/speedtest.jpg)
