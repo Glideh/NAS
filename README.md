@@ -1,3 +1,7 @@
+Ici, le but est de trouver les solutions pour créer un serveur à partir de zero autour de disques SAS.
+
+Nous avons essayé de trouver un bon compromis budget (~**500€**) / performance / consommation électrique / bruit.
+
 # Matériel
 
 |                      | Modèle                                  | Prix |                                                        |
@@ -9,6 +13,7 @@
 | **HBA**                  | [LSI SAS 9211-8i](https://fr.aliexpress.com/item/1005005028899772.html)             |  26€ | Pour brancher 8 disques en SAS 2                              |
 | **RAM**                  | Corsair Vengeance LPX 3600 MHz par 16Go |  37€ | 8 gigs peuvent suffire même pour Plex                  |
 | **NVMe**                 | Crucial 500Go                           |  35€ |                                                        |
+| **Boîtier**                 | ATX minimum                      |  ~60€ | Privilégier un bon espace de fixation SSD/HDD et des emplacements pour la ventilation        |
 | **Splitters d'alim**     | [Aliex SATA 1 -> 3](https://fr.aliexpress.com/item/1005005766877776.html)                       |   2€ | SATA mieux que Molex                                   |
 | **Câbles de données**    | [Aliex **SFF 8643** -> **SFF 8482**](https://fr.aliexpress.com/item/1005004937995975.html)              |   8€ | Par câble pour 4 disques                               |
 | **Ventilateur CPU**      | [Aliex AMD EOM](https://fr.aliexpress.com/item/1005005228000756.html)                           |  13€ | Low profile, le 220GE chauffe très peu                 |
@@ -85,6 +90,8 @@ Il est possible de faire du Raid classique ou du RaidZ
 
 ## Raid classique
 
+TODO
+
 ## RaidZ
 
 Plus d'informations [ici](https://resinfo-gt.pages.in2p3.fr/zfs/doc/index.html)
@@ -154,7 +161,9 @@ Plusieurs choses sont intéressantes à surveiller, exemples:
 
 ## Prometheus & Grafana
 
-2 outils sont mis à contribution **Prometheus** pour la récupération des données et **Grafana** pour l'affichage
+2 outils sont mis à contribution:
+- **Prometheus** pour la récupération des données
+- **Grafana** pour l'affichage
 
 Voila un exemple de config:
 
