@@ -1,6 +1,6 @@
-Ici, le but est de trouver les solutions pour créer un serveur à partir de zero autour de disques SAS.
+Le but est de trouver les solutions pour créer un serveur à partir de zero autour de disques SAS.
 
-Nous avons essayé de trouver un bon compromis budget (~**500€**) / performance / consommation électrique / bruit.
+Nous avons essayé de trouver un bon compromis budget (~**500€**) / performance / consommation électrique.
 
 # Matériel
 
@@ -27,7 +27,7 @@ Nous avons essayé de trouver un bon compromis budget (~**500€**) / performanc
 
 # Le contrôleur SAS: HBA
 
-Le HBA est le contrôleur qui permet à la carte mère de communiquer en SAS. Les cartes mères grand publique ne gèrent que le SATA par défaut.
+Le HBA est le contrôleur qui permet à la carte mère de communiquer en SAS. Les cartes mères grand public ne gèrent que le SATA par défaut.
 
 Le nom de code de la carte est en général de cette forme: **9XYY-Zi**
 
@@ -40,7 +40,7 @@ Exemples:
 - **9300-16i** SAS**3**, **première** révision, **16** disques (4 connecteurs "mini SAS")
 - **9217-8i** SAS**2**, révision **17**, **8** disques (2 connecteurs)
 
-Attention ces cartes peuvent atteindre \~80° sans ventilation, penser à y mettre un 12cm dédié avec un adaptateur slot (50° ventilée), même si elle est censé supporter jusqu'à 110°
+Attention ces cartes peuvent atteindre \~80° sans ventilation. Il y a plusieurs façon de les ventiler, la plus simple étant d'y mettre un 12cm dédié avec un adaptateur slot (50° ventilée). Cette carte est censé supporter jusqu'à 110° mais il est fortement déconseillé de l'utiliser trop longtemps à haute température, sa durée de vie en serait réduite.
 
 ## SAS 3
 
@@ -50,11 +50,11 @@ Exemple de HBA SAS 3: **LSI SAS 9300-16i**
 
 ![LSI SAS 9300-16i](images/9300-16i.png)
 
-Cette carte possède 4 connecteurs mini SAS (**SFF 8643**) qui permettent de brancher 4 disques chacun
+Cette carte possède 4 connecteurs mini SAS (**SFF 8643**) qui permettent de brancher 4 disques chacun, donc 16 disques (comme l'indique le `16i` du modèle)
 
 ## SAS 2
 
-Le SAS 3 permet théoriquement d'atteindre **6Gb/s**
+Le SAS 2 permet théoriquement d'atteindre **6Gb/s**
 
 Exemple de HBA SAS 2: **LSI SAS 9211-8i**
 
@@ -425,11 +425,11 @@ Avec cet adaptateur, il est possible de chainer 2 ventilateurs côte à côte.
 
 La gestion de la vitesse des ventilateurs est normalement possible avec `pwmconfig` (qui est installé avec `lm-sensors` mentionné dans les [Autres composants](#autres-composants))
 
-Mais je n'ai pas réussi à récupérer quoique ce soit avec la carte mère **B450 AORUS ELITE V2**
+Mais je n'ai pas réussi à récupérer quoique ce soit avec la carte mère **B450 Aorus Elite V2**
 
 # Réseau
 
-Le **SAS 3** permet un débit théorique de 1Go/s. En pratique j'ai pu atteindre **500Mo/s** en écriture avec SSD SAS 3 (simple rsync d'un gros fichier et sans raid).
+Le **SAS 3** permet un débit théorique de 1Go/s. En pratique j'ai pu atteindre **500Mo/s** en écriture sur un SSD SAS 3 (simple rsync d'un gros fichier et sans raid).
 
 Avec la bonne boite internet (exemple Freebox Delta), il suffit donc d'avoir une **carte réseau 10Gb** avec le bon câble pour permettre une vitesse de téléchargement élevée.
 
