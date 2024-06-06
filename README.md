@@ -25,6 +25,8 @@ Nous avons essayé de trouver un bon compromis budget (~**500€**) / performanc
 | **Carte réseau 10Gb**  | [Aliex Intel X520](https://fr.aliexpress.com/item/1005005503868174.html)                            |   35€ |  |
 | **Câble DAC**  | [Aliex 3 mètres](https://fr.aliexpress.com/item/1005006118860005.html)                            |   13€ |  |
 
+La consommation électrique constatée avec le matériel ci-dessus (4 ventilateurs 12") est de **80W** avec **8 SSD**, **120W** avec **16 SSD**
+
 # Le contrôleur SAS: HBA
 
 Le HBA est le contrôleur qui permet à la carte mère de communiquer en SAS. Les cartes mères grand public ne gèrent que le SATA par défaut.
@@ -336,11 +338,15 @@ Le **SAS 3** permet un débit théorique de 1Go/s. En pratique j'ai pu atteindre
 
 Avec la bonne boite internet (exemple Freebox Delta), il suffit donc d'avoir une **carte réseau 10Gb** avec le bon câble pour permettre une vitesse de téléchargement élevée.
 
+## Interface
+
 En termes d'interface, il existe des **cartes SFP+** à 35€ sur Aliexpress (exemple en lien dans le tableau du matériel)
 
 ![Carte SFP+](images/interface-sfp+.webp)
 
 Attention ces interfaces grand publique **ne gèrent pas le WOL**, j'ai personnellement laissé l'ethernet 1Gb intégré à la carte mère branché pour garder cette fonctionnalité.
+
+## Câbles
 
 Si la machine n'est pas trop éloignée du routeur (pas plus de **10m**) l'idéal est d'utiliser un **câble DAC**. Il a l'avantage de moins faire consommer et moins chauffer les interfaces. Sinon il faut passer sur de la fibre qui requiert des modules de chaque coté pour convertir le signal électrique en lumière et inversement.
 
@@ -348,7 +354,15 @@ Ici un DAC sur Aliexpress (3m -> **13€**)
 
 ![DAC](images/dac.webp)
 
-Test de débit avec Speedtest
+## Souiche
+
+Si besoin de brancher plusieurs appareils en SFP+, le switch **Mikrotik CRS305** est un bon compromi et coute environ 140€ sur Amazon
+
+![Mikrotik CRS305](images/mikrotik.jpg)
+
+Le Mikrotik CRS305 possède 4 ports SFP+ et 1 PoE
+
+Test de débit avec Speedtest en utilisant le matériel en question (et une boite Freebox Delta)
 
 ![Speedtest](images/speedtest.jpg)
 
@@ -453,7 +467,7 @@ On est censé [pouvoir y accéder par `host.docker.internal`](https://stackoverf
 
 ## Seedbox
 
-Voila une composition qui permet d'utiliser avec [Transmission](https://github.com/transmission/transmission) & **NordVPN** en mode Wireguard.
+Voila une composition qui permet d'utiliser [Transmission](https://github.com/transmission/transmission) avec **NordVPN** en mode Wireguard.
 
 [Gluetun](https://github.com/qdm12/gluetun) est un client VPN léger qui accepte un grand nombre de protocoles et fournisseurs différents (comme NordVPN).
 
