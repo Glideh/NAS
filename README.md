@@ -150,103 +150,6 @@ sudo zpool create volume2 raidz SSD11 SSD12 SSD13 SSD14 SSD21 SSD22 SSD23 SSD24 
 
 - Les volumes sont maintenant visibles et utilisables dans `/volume1` & `/volume2`
 
-# Surveillance
-
-Plusieurs choses sont intéressantes à surveiller, exemples:
-
-- Les températures
-  - Disques
-  - HBA
-  - CPU
-- L'état des raids
-- Les débits réseau entrant et sortant
-
-## Prometheus & Grafana
-
-2 outils sont mis à contribution:
-- **Prometheus** pour la récupération des données
-- **Grafana** pour l'affichage
-
-Voila un exemple de config:
-
-**docker-compose.yml**
-
-```yml
-services:
-
-  node-exporter:
-    container_name: node-exporter
-    image: quay.io/prometheus/node-exporter:latest
-    restart: unless-stopped
-    command:
-      - --path.rootfs=/host
-    pid: host
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
-      - /:/host:ro,rslave
-    network_mode: host
-
-  smartctl-exporter:
-    container_name: smartctl-exporter
-    image: prometheuscommunity/smartctl-exporter
-    restart: unless-stopped
-    privileged: true
-    user: root
-    ports:
-      - "9633:9633"
-
-  prometheus:
-    container_name: prometheus
-    image: prom/prometheus
-    restart: unless-stopped
-    volumes:
-      - "./prometheus.yml:/etc/prometheus/prometheus.yml"
-      - "prometheus-data:/prometheus"
-    ports:
-      - 9090:9090
-
-  grafana:
-    container_name: grafana
-    image: grafana/grafana
-    restart: unless-stopped
-    depends_on:
-      - prometheus
-    ports:
-      - 3000:3000
-    volumes:
-      - grafana-data:/var/lib/grafana
-
-volumes:
-    prometheus-data:
-    grafana-data:
-```
-
-- `node-exporter` récupère les métriques classiques du système, il doit tourner directement sur le contexte de l'hôte pour avoir accès au matériel de manière non cloisonnée
-- `smartctl-exporter` récupère les métriques des disques
-- `prometheus` rassemble les données et les met à disposition de Grafana
-- `grafana` vient lire les données sur Prometheus
-
-**prometheus.yml**
-
-```yml
-global:
-  scrape_interval: 15s
-
-scrape_configs:
-  - job_name: node
-    static_configs:
-    - targets:
-      - 172.17.0.1:9100
-  - job_name: smartctl
-    static_configs:
-    - targets:
-      - smartctl-exporter:9633
-```
-
-Comme `node-exporter` tourne sur l'hôte on utilise ici l'IP de l'hôte 172.17.0.1 par défaut définie par Docker.  
-On est censé [pouvoir y accéder par `host.docker.internal`](https://stackoverflow.com/a/24326540/305189) mais ça n'a pas fonctionné chez moi.
-
 ## Températures
 
 Depuis un terminal il est possible de voir les températures de toutes les sondes (HBA, disques, processeur, NVMe, etc.)
@@ -448,3 +351,176 @@ Ici un DAC sur Aliexpress (3m -> **13€**)
 Test de débit avec Speedtest
 
 ![Speedtest](images/speedtest.jpg)
+
+# Services
+
+## Surveillance
+
+Plusieurs choses sont intéressantes à surveiller, exemples:
+
+- Les températures
+  - Disques
+  - HBA
+  - CPU
+- L'état des raids
+- Les débits réseau entrant et sortant
+
+### Prometheus & Grafana
+
+2 outils sont mis à contribution:
+- **Prometheus** pour la récupération des données
+- **Grafana** pour l'affichage
+
+Voila un exemple de config:
+
+**compose.yml**
+
+```yml
+services:
+
+  node-exporter:
+    container_name: node-exporter
+    image: quay.io/prometheus/node-exporter:latest
+    restart: unless-stopped
+    command:
+      - --path.rootfs=/host
+    pid: host
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /:/host:ro,rslave
+    network_mode: host
+
+  smartctl-exporter:
+    container_name: smartctl-exporter
+    image: prometheuscommunity/smartctl-exporter
+    restart: unless-stopped
+    privileged: true
+    user: root
+    ports:
+      - "9633:9633"
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus
+    restart: unless-stopped
+    volumes:
+      - "./prometheus.yml:/etc/prometheus/prometheus.yml"
+      - "prometheus-data:/prometheus"
+    ports:
+      - 9090:9090
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    ports:
+      - 3000:3000
+    volumes:
+      - grafana-data:/var/lib/grafana
+
+volumes:
+    prometheus-data:
+    grafana-data:
+```
+
+- `node-exporter` récupère les métriques classiques du système, il doit tourner directement sur le contexte de l'hôte pour avoir accès au matériel de manière non cloisonnée
+- `smartctl-exporter` récupère les métriques des disques
+- `prometheus` rassemble les données et les met à disposition de Grafana
+- `grafana` vient lire les données sur Prometheus
+
+**prometheus.yml**
+
+```yml
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: node
+    static_configs:
+    - targets:
+      - 172.17.0.1:9100
+  - job_name: smartctl
+    static_configs:
+    - targets:
+      - smartctl-exporter:9633
+```
+
+Comme `node-exporter` tourne sur l'hôte on utilise ici l'IP de l'hôte 172.17.0.1 par défaut définie par Docker.  
+On est censé [pouvoir y accéder par `host.docker.internal`](https://stackoverflow.com/a/24326540/305189) mais ça n'a pas fonctionné chez moi.
+
+## Seedbox
+
+Voila une composition qui permet d'utiliser avec [Transmission](https://github.com/transmission/transmission) & **NordVPN** en mode Wireguard.
+
+[Gluetun](https://github.com/qdm12/gluetun) est un client VPN léger qui accepte un grand nombre de protocoles et fournisseurs différents (comme NordVPN).
+
+**compose.yml**
+
+```yml
+services:
+  nordvpn:
+    image: qmcgaw/gluetun
+    container_name: torrent-nord
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "9092:9091" # Transmission
+      - "51413:51413" # Transmision
+      - "51413:51413/udp" # Transmision
+    environment:
+      - VPN_SERVICE_PROVIDER=nordvpn
+      - WIREGUARD_PRIVATE_KEY=${WIREGUARD_PRIVATE_KEY}
+#      - SERVER_CITIES=Prague
+      - VPN_TYPE=wireguard
+  transmission:
+    image: ghcr.io/linuxserver/transmission
+    network_mode: "service:nordvpn"
+    container_name: torrent-transmission
+    restart: unless-stopped
+    depends_on:
+      - nordvpn
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Paris
+    volumes:
+      - "./config:/config"
+      - "./downloads:/downloads"
+      - "./watch:/watch"
+```
+
+**.env**
+
+```
+WIREGUARD_PRIVATE_KEY=<clé privée>
+```
+
+La clé privée Wireguard peut être générée avec un token de cette manière:
+
+```
+curl -s -u token:<ACCESS_TOKEN> https://api.nordvpn.com/v1/users/services/credentials
+```
+
+Pour utiliser [Qbittorrent](https://github.com/qbittorrent/qBittorrent) à la place de Transmission:
+
+```yml
+  qbittorrent:
+    image: linuxserver/qbittorrent
+    network_mode: "service:nordvpn"
+    container_name: torrent-qbit
+    restart: unless-stopped
+    depends_on:
+      - nordvpn
+    environment:
+      - WEBUI_PORT=8089
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Paris
+    volumes:
+      - "./config:/config"
+      - "./downloads:/downloads"
+```
