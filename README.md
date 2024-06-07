@@ -465,6 +465,38 @@ scrape_configs:
 Comme `node-exporter` tourne sur l'hôte on utilise ici l'IP de l'hôte 172.17.0.1 par défaut définie par Docker.  
 On est censé [pouvoir y accéder par `host.docker.internal`](https://stackoverflow.com/a/24326540/305189) mais ça n'a pas fonctionné chez moi.
 
+## Samba
+
+Voila une manière simple de créer une instance Samba avec Docker
+
+**compose.yml**
+
+```yml
+services:
+  samba:
+    image: ghcr.io/servercontainers/samba:latest
+    container_name: samba
+    restart: unless-stopped
+    environment:
+      ACCOUNT_glide: <hash-user>
+        [volume1]
+          path = /volume1
+          valid users = glide
+          read only = no
+    volumes:
+      - /volume1:/volume1
+    ports:
+      - 445:445
+```
+
+Replacer les occurrences de `glide` et `volume1` respectivement par l'utilisateur et le partage voulus.
+
+Générer le `<hash-user>` avec la commande suivante:
+
+```
+docker run -ti --rm --entrypoint create-hash.sh ghcr.io/servercontainers/samba
+```
+
 ## Seedbox
 
 Voila une composition qui permet d'utiliser [Transmission](https://github.com/transmission/transmission) avec **NordVPN** en mode Wireguard.
