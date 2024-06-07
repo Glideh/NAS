@@ -465,6 +465,46 @@ scrape_configs:
 Comme `node-exporter` tourne sur l'hôte on utilise ici l'IP de l'hôte 172.17.0.1 par défaut définie par Docker.  
 On est censé [pouvoir y accéder par `host.docker.internal`](https://stackoverflow.com/a/24326540/305189) mais ça n'a pas fonctionné chez moi.
 
+Attention, le node-exporter peut dépasser le temps max de réponse pour prometheus. Dans ce cas il est possible de réduire le périmètre des métriques, exemple:
+
+**compose.yml**
+
+```yml
+#...
+  node-exporter:
+    container_name: node-exporter
+    image: quay.io/prometheus/node-exporter:latest
+    restart: unless-stopped
+    command:
+      - --path.rootfs=/host
+      - --collector.disable-defaults
+      - --collector.cpu
+      - --collector.filesystem
+      - --collector.meminfo
+      - --collector.hwmon
+      - --collector.netdev
+    pid: host
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /:/host:ro,rslave
+    network_mode: host
+#...
+```
+
+Il est aussi possible d'augmenter le délai d'expiration
+
+**prometheus.yml**
+
+```yml
+#...
+  - job_name: node
+    scrape_interval: 40s
+    scrape_timeout: 20s
+#...
+```
+
+
 ![Grafana](images/grafana.png)
 
 ## Samba
@@ -610,10 +650,154 @@ IMMICH_VERSION=release
 DB_PASSWORD=<pass>
 
 DB_USERNAME=postgres
-DB_DATABASE_NAME=immich
+DB_DATABASE_NAME=<user>
 ```
 
 ![Immich](images/immich.png)
+
+## Wireguard
+
+Stack pour [Wireguard](https://github.com/linuxserver/docker-wireguard)
+
+**compose.yml**
+
+```yml
+services:
+  wireguard:
+    image: lscr.io/linuxserver/wireguard:1.0.20210914
+    container_name: wireguard
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ./config:/config
+    ports:
+      - 51820:51820/udp
+```
+
+## Vaultwarden
+
+Stack pour [Vaultwarden](https://github.com/dani-garcia/vaultwarden)
+
+**compose.yml**
+
+```yml
+services:
+  vaultwarden:
+    image: vaultwarden/server:1.30.5
+    restart: unless-stopped
+    container_name: vaultwarden
+    volumes:
+      - ./data:/data
+#    ports:
+#      - 3012:3012
+    environment:
+      - TZ=Europe/Paris
+      - WEBSOCKET_ENABLED=true
+      - ADMIN_TOKEN=${VAULTWARDEN_ADMIN_TOKEN}
+
+networks:
+  default:
+    name: traefik # Avec par exemple Traefik comme reverse proxy (Exemple dans la section Traefik)
+    external: true
+```
+
+## Traefik
+
+Voila l'installation que nous recommandons pour [Træfik](https://doc.traefik.io/traefik/). Elle a les avantages d'être facile à apréhender/maintenir par son découpage et de pouvoir surveiller les services à activer/désactiver et de manière centralisée.
+
+**compose.yml**
+
+```yml
+services:
+  traefik:
+    image: traefik:v3.0.0
+    restart: unless-stopped
+    container_name: traefik
+    environment:
+      - TZ=Europe/Paris
+      - XDG_CONFIG_HOME=/ # Permet de faire découvrir la config la où elle est montée (/traefik.yml)
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./letsencrypt:/letsencrypt # Emplacement des certificat
+      - ./routers:/routers # Répertoire surveillé contenant un fichier par router
+      - ./traefik.yml:/traefik.yml # Config principale
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+networks:
+  default:
+    name: traefik # Le réseau à rejoindre pour les "backends" concernés
+    external: true
+```
+
+**traefik.yml**
+
+```yml
+log:
+#  level: DEBUG
+  level: INFO
+
+providers:
+  file:
+    directory: /routers
+    watch: true
+
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: "websecure"
+          scheme: "https"
+  websecure:
+    address: ":443"
+
+certificatesResolvers:
+  my: # Nom arbitraire à changer si besoin
+    acme:
+      tlsChallenge: true
+      email: "<mail-de-ladmin>"
+      storage: "/letsencrypt/prod.json"
+  staging: # Le staging permet de simuler la récupération d'un certificat sans consommer les tentatives potentiellement infructueuses (limitées)
+    acme:
+      tlsChallenge: true
+      email: "<mail-de-ladmin>"
+      storage: "/letsencrypt/staging-v2.json"
+      caServer: "https://acme-staging-v02.api.letsencrypt.org/directory"
+```
+
+Exemple de router pour Vaulwarden
+
+**routers/vaultwarden.yml**
+
+```yml
+http:
+  routers:
+    vaultwarden:
+      service: vaultwarden
+      rule: "Host(`vaultwarden.<mon-domaine>`)"
+      entrypoints: websecure
+      tls:
+        certResolver: my
+  services:
+    vaultwarden:
+      loadBalancer:
+        servers:
+          - url: "http://vaultwarden" # "vaultwarden" doit correspondre au nom du service Docker correspondant (son IP sera résolue par le DNS interne de Docker)
+```
+
+Bien sûr, il faut remplacer `<mon-domaine>` par le domaine concerné...
+
+Même à chaud, pour ajouter un routeur, il suffit de créer un fichier dans le répertoire `routers` pour que la config soit prise en compte.
+
+La syntaxe YML est plus lisible que les configurations exposées dans des labels sur les services Docker.
 
 ## Seedbox
 
