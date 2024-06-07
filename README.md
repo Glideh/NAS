@@ -465,6 +465,8 @@ scrape_configs:
 Comme `node-exporter` tourne sur l'hôte on utilise ici l'IP de l'hôte 172.17.0.1 par défaut définie par Docker.  
 On est censé [pouvoir y accéder par `host.docker.internal`](https://stackoverflow.com/a/24326540/305189) mais ça n'a pas fonctionné chez moi.
 
+![Grafana](images/grafana.png)
+
 ## Samba
 
 Voila une manière simple de créer une instance Samba avec Docker
@@ -496,6 +498,122 @@ Générer le `<hash-user>` avec la commande suivante:
 ```
 docker run -ti --rm --entrypoint create-hash.sh ghcr.io/servercontainers/samba
 ```
+
+Plus d'information sur le [Github](https://github.com/ServerContainers/samba)
+
+## Photos
+
+[Immich](https://github.com/immich-app/immich) est un système de gestion de photos moderne et populaire, il permet (parmis [tant d'autres fonctionnalités](https://github.com/immich-app/immich?tab=readme-ov-file#features)) de:
+- Parcourir les photos par chronologie (à la Google photo) ou par album
+- Créer des albums et les partager
+- Automatiser la sauveguarde des photos des téléphones
+- Reconnaitre les visages, formes, objets, couleur et attacher des metadonnées en conséquence
+
+**compose.yml**
+
+```yml
+services:
+  immich-server:
+    container_name: immich_server
+    image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
+    command: ['start.sh', 'immich']
+    volumes:
+      - ${UPLOAD_LOCATION}:/usr/src/app/upload
+      - /etc/localtime:/etc/localtime:ro
+      - /volume1/Photos:/volume1/Photos:ro
+    env_file:
+      - .env
+    ports:
+      - 2283:3001
+    depends_on:
+      - redis
+      - database
+    restart: unless-stopped
+
+  immich-microservices:
+    container_name: immich_microservices
+    image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
+    # extends: # uncomment this section for hardware acceleration - see https://immich.app/docs/features/hardware-transcoding
+    #   file: hwaccel.transcoding.yml
+    #   service: cpu # set to one of [nvenc, quicksync, rkmpp, vaapi, vaapi-wsl] for accelerated transcoding
+    command: ['start.sh', 'microservices']
+    volumes:
+      - ${UPLOAD_LOCATION}:/usr/src/app/upload
+      - /etc/localtime:/etc/localtime:ro
+      - /volume1/Photos:/volume1/Photos:ro
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - database
+    restart: unless-stopped
+
+  immich-machine-learning:
+    container_name: immich_machine_learning
+    # For hardware acceleration, add one of -[armnn, cuda, openvino] to the image tag.
+    # Example tag: ${IMMICH_VERSION:-release}-cuda
+    image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_VERSION:-release}
+    # extends: # uncomment this section for hardware acceleration - see https://immich.app/docs/features/ml-hardware-acceleration
+    #   file: hwaccel.ml.yml
+    #   service: cpu # set to one of [armnn, cuda, openvino, openvino-wsl] for accelerated inference - use the `-wsl` version for WSL2 where applicable
+    volumes:
+      - model-cache:/cache
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  redis:
+    container_name: immich_redis
+    image: registry.hub.docker.com/library/redis:6.2-alpine@sha256:84882e87b54734154586e5f8abd4dce69fe7311315e2fc6d67c29614c8de2672
+    restart: unless-stopped
+
+  database:
+    container_name: immich_postgres
+    image: registry.hub.docker.com/tensorchord/pgvecto-rs:pg14-v0.2.0@sha256:90724186f0a3517cf6914295b5ab410db9ce23190a2d9d0b9dd6463e3fa298f0
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_DB: ${DB_DATABASE_NAME}
+    volumes:
+      - ${DB_DATA_LOCATION}:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  immich-folder-album-creator:
+    container_name: immich_folder_album_creator
+    image: salvoxia/immich-folder-album-creator:latest
+    restart: unless-stopped
+    environment:
+      API_URL: http://immich_server:3001/api
+      API_KEY: <api-key> # À générer depuis l'admin dans le GUI d'Immich
+      ROOT_PATH: /volume1/Photos
+      CRON_EXPRESSION: "42 17 * * *"
+      TZ: Europe/Paris
+    volumes:
+      - /volume1/Photos:/volume1/Photos:ro
+    profiles:
+      - donotstart
+
+volumes:
+  model-cache:
+```
+
+Le service `immich-folder-album-creator` est optionnel. Il permet, comme son nom l'indique, de générer des albums à partir de répertoires existants.
+
+**.env**
+
+```env
+UPLOAD_LOCATION=/volume1/immich/library
+DB_DATA_LOCATION=/volume1/immich/postgres
+
+IMMICH_VERSION=release
+
+DB_PASSWORD=<pass>
+
+DB_USERNAME=postgres
+DB_DATABASE_NAME=immich
+```
+
+![Immich](images/immich.png)
 
 ## Seedbox
 
