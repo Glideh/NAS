@@ -872,3 +872,112 @@ Pour utiliser [Qbittorrent](https://github.com/qbittorrent/qBittorrent) à la pl
       - "./config:/config"
       - "./downloads:/downloads"
 ```
+
+## Sauvegarde
+
+Ici l'idée est d'utiliser [Restic](https://restic.readthedocs.io/en/stable/) avec un stockage en SFTP
+
+**compose.yml**
+
+```yml
+services:
+
+  restic:
+    image: mazzolino/restic
+    container_name: restic
+    hostname: <hote-source>
+    restart: unless-stopped
+    environment:
+#      RUN_ON_STARTUP: "true"
+      BACKUP_CRON: "0 30 3 * * *"
+      RESTIC_REPOSITORY: sftp:<alias>:backup
+      RESTIC_PASSWORD: ${RESTIC_PASSWORD}
+      RESTIC_BACKUP_SOURCES: /data
+      RESTIC_BACKUP_ARGS: >-
+        --verbose
+      RESTIC_FORGET_ARGS: >-
+        --keep-last 10
+        --keep-daily 7
+        --keep-weekly 5
+#        --keep-monthly 12
+      TZ: Europe/Paris
+    volumes:
+      - ./restic/source:/data:ro # Données à sauvegarder
+      - ./ssh:/run/secrets/.ssh:ro
+
+  sftp:
+    image: atmoz/sftp
+    container_name: sftp
+    restart: unless-stopped
+    volumes:
+      - ./sftp/users.conf:/etc/sftp/users.conf:ro
+      - ./sftp/backup/<utilisateur>:/home/<utilisateur>/cible # Répertoire de sauvegarde
+      - ./sftp/keys/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key
+      - ./sftp/keys/ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key
+      - ./sftp/keys/sftp.glide.pub:/home/glide/.ssh/keys/id_rsa.pub
+    ports:
+      - "<port-sftp>:22"
+```
+
+**.env**
+
+```
+RESTIC_PASSWORD=toto
+```
+
+_Ce mot de passe est utilisé pour chiffrer les sauvegardes_
+
+Plus d'informations sur le [Github du service "Resticker"](https://github.com/djmaze/resticker) ou sur [celui du SFTP](https://github.com/atmoz/sftp)
+
+### Restic
+
+- Créer les répertoires de config SSH
+
+```
+mkdir -p restic/ssh
+```
+
+- Générer les clés
+
+```
+ssh-keygen -f ./restic/ssh/id_rsa
+```
+
+- Générer le known_hosts
+
+```
+ssh-keyscan -H -p <port-sftp> <domaine> > ./restic/ssh/known_hosts
+```
+
+- Créer le raccourci SSH
+
+```
+Host <alias>
+  Hostname <domaine>
+  User glide
+  Port <port-sftp>
+```
+
+### SFTP
+
+- Créer les répertoires de config SSH et de sauvegarde
+
+```
+mkdir -p sftp/ssh
+mkdir -p /sftp/backup/<utilisateur>
+```
+
+- Définir les utilisateurs
+
+```
+echo "<utilisateur>::<uid>:<gid>:<repertoire>" >> sftp/users.conf
+# Exemple
+echo "glide::1000:1000:cible" >> sftp/users.conf
+```
+
+- Créer les clés
+
+```
+ssh-keygen -t ed25519 -f sftp/ssh/ssh_host_ed25519_key < /dev/null
+ssh-keygen -t rsa -b 4096 -f sftp/ssh/ssh_host_rsa_key < /dev/null
+```
