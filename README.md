@@ -877,11 +877,137 @@ Pour utiliser [Qbittorrent](https://github.com/qbittorrent/qBittorrent) à la pl
 
 Ici l'idée est d'utiliser [Restic](https://restic.readthedocs.io/en/stable/) avec un stockage en SFTP
 
+### SFTP
+
+Service SSH dockerisé
+
 **compose.yml**
 
 ```yml
 services:
+  sftp:
+    image: atmoz/sftp
+    container_name: sftp
+    restart: unless-stopped
+    volumes:
+      - ./sftp/users.conf:/etc/sftp/users.conf:ro
+      - ./sftp/backup/<utilisateur>:/home/<utilisateur>/cible # Répertoire de sauvegarde
+      - ./sftp/keys/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key
+      - ./sftp/keys/ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key
+      - ./sftp/keys/sftp.<utilisateur>.pub:/home/<utilisateur>/.ssh/keys/id_rsa.pub
+    ports:
+      - "<port-sftp>:22"
+```
 
+- Créer les répertoires de config SSH et de sauvegarde
+
+```
+mkdir -p sftp/ssh
+mkdir -p sftp/backup/<utilisateur>
+```
+
+- Définir les utilisateurs
+
+```
+echo "<utilisateur>::<uid>:<gid>:<repertoire>" >> sftp/users.conf
+
+# Exemple
+echo "glide::1000:1000:cible" >> sftp/users.conf
+```
+
+- Créer les clés
+
+```
+ssh-keygen -t ed25519 -f sftp/ssh/ssh_host_ed25519_key < /dev/null
+ssh-keygen -t rsa -b 4096 -f sftp/ssh/ssh_host_rsa_key < /dev/null
+```
+
+Plus d'infos sur le [Github](https://github.com/atmoz/sftp)
+
+### Restic
+
+Nous évoquerons de deux versions, une avec GUI **Backrest** et une sans **Resticker**. 
+
+#### Backrest
+
+Backrest est un GUI au dessus de Restic (inclu dans le service).
+
+**compose.yml**
+
+```yml
+services:
+  restic:
+    image: garethgeorge/backrest
+    container_name: backrest
+    restart: unless-stopped
+    volumes:
+      - ./backrest/data:/data
+      - ./backrest/config:/config
+      - ./backrest/cache:/cache
+      - ./backrest/source:/source:ro # Données à sauvegarder
+      - ./backrest/ssh:/ssh # Config & clés SSD
+    environment:
+      - BACKREST_DATA=/data
+      - BACKREST_CONFIG=/config/config.json
+      - XDG_CACHE_HOME=/cache
+    ports:
+      - "9898:9898"
+```
+
+- Créer le répertoire de config SSH
+
+```
+mkdir -p backrest/ssh
+```
+
+- Générer les clés
+
+```
+ssh-keygen -f ./backrest/ssh/id_rsa
+```
+
+- Générer le `known_hosts`
+
+```
+ssh-keyscan -H -p <port-sftp> <domaine> > ./backrest/ssh/known_hosts
+```
+
+- Créer la config SSH dans `backrest/ssh/config`
+
+```
+Host <alias>
+  Hostname <domaine>
+  User <utilisateur>
+  Port <port-sftp>
+  IdentityFile /ssh/id_rsa
+  UserKnownHostsFile /ssh/known_hosts
+```
+
+- Une fois le service lancé, accéder au GUI avec un navigateur sur le port `9898`
+- Créer un _Repo_ avec les paramètres suivants
+
+```yml
+uri: sftp:<alias>:backup
+password: <mot-de-passe-pour-chiffrer-les-sauvegardes>
+flags: -o sftp.args="-F /ssh/config"
+```
+
+Exemple:
+
+![Repo Backrest](images/backrest-repo.png)
+
+- Et enfin, créer un _Plan_ avec les données à sauvegarder (`/source` défini dans notre compose)
+
+Plus d'infos sur le [Github](https://github.com/garethgeorge/backrest)
+
+#### Resticker
+
+Resticker est un Restic dockerisé (sans GUI)
+
+**compose.yml**
+
+```yml
+services:
   restic:
     image: mazzolino/restic
     container_name: restic
@@ -902,82 +1028,41 @@ services:
 #        --keep-monthly 12
       TZ: Europe/Paris
     volumes:
-      - ./restic/source:/data:ro # Données à sauvegarder
-      - ./ssh:/run/secrets/.ssh:ro
-
-  sftp:
-    image: atmoz/sftp
-    container_name: sftp
-    restart: unless-stopped
-    volumes:
-      - ./sftp/users.conf:/etc/sftp/users.conf:ro
-      - ./sftp/backup/<utilisateur>:/home/<utilisateur>/cible # Répertoire de sauvegarde
-      - ./sftp/keys/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key
-      - ./sftp/keys/ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key
-      - ./sftp/keys/sftp.glide.pub:/home/glide/.ssh/keys/id_rsa.pub
-    ports:
-      - "<port-sftp>:22"
+      - ./resticker/source:/data:ro # Données à sauvegarder
+      - ./resticker/ssh:/run/secrets/.ssh:ro
 ```
 
 **.env**
 
 ```
-RESTIC_PASSWORD=toto
+RESTIC_PASSWORD=<mot-de-passe-pour-chiffrer-les-sauvegardes>
 ```
 
-_Ce mot de passe est utilisé pour chiffrer les sauvegardes_
-
-Plus d'informations sur le [Github du service "Resticker"](https://github.com/djmaze/resticker) ou sur [celui du SFTP](https://github.com/atmoz/sftp)
-
-### Restic
-
-- Créer les répertoires de config SSH
+- Créer le répertoire de config SSH
 
 ```
-mkdir -p restic/ssh
+mkdir -p resticker/ssh
 ```
 
 - Générer les clés
 
 ```
-ssh-keygen -f ./restic/ssh/id_rsa
+ssh-keygen -f ./resticker/ssh/id_rsa
 ```
 
 - Générer le known_hosts
 
 ```
-ssh-keyscan -H -p <port-sftp> <domaine> > ./restic/ssh/known_hosts
+ssh-keyscan -H -p <port-sftp> <domaine> > ./resticker/ssh/known_hosts
 ```
 
-- Créer le raccourci SSH
+- Créer la config SSH dans `resticker/ssh/config`
 
 ```
 Host <alias>
   Hostname <domaine>
-  User glide
+  User <utilisateur>
   Port <port-sftp>
 ```
 
-### SFTP
-
-- Créer les répertoires de config SSH et de sauvegarde
-
-```
-mkdir -p sftp/ssh
-mkdir -p /sftp/backup/<utilisateur>
-```
-
-- Définir les utilisateurs
-
-```
-echo "<utilisateur>::<uid>:<gid>:<repertoire>" >> sftp/users.conf
-# Exemple
-echo "glide::1000:1000:cible" >> sftp/users.conf
-```
-
-- Créer les clés
-
-```
-ssh-keygen -t ed25519 -f sftp/ssh/ssh_host_ed25519_key < /dev/null
-ssh-keygen -t rsa -b 4096 -f sftp/ssh/ssh_host_rsa_key < /dev/null
-```
+Plus d'informations sur le [Github](https://github.com/djmaze/resticker)
