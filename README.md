@@ -507,7 +507,7 @@ Il est aussi possible d'augmenter le délai d'expiration
 
 ![Grafana](images/grafana.png)
 
-## Samba
+## Samba/CIFS
 
 Voila une manière simple de créer une instance Samba avec Docker
 
@@ -655,7 +655,7 @@ DB_DATABASE_NAME=<user>
 
 ![Immich](images/immich.png)
 
-## Wireguard
+## VPN
 
 Stack pour [Wireguard](https://github.com/linuxserver/docker-wireguard)
 
@@ -679,7 +679,7 @@ services:
       - 51820:51820/udp
 ```
 
-## Vaultwarden
+## Gestionnaire de mots de passe
 
 Stack pour [Vaultwarden](https://github.com/dani-garcia/vaultwarden)
 
@@ -706,7 +706,7 @@ networks:
     external: true
 ```
 
-## Traefik
+## Reverse proxy
 
 Voila l'installation que nous recommandons pour [Træfik](https://doc.traefik.io/traefik/). Elle a les avantages d'être facile à apréhender/maintenir par son découpage et de pouvoir surveiller les services à activer/désactiver et de manière centralisée.
 
@@ -1066,3 +1066,27 @@ Host <alias>
 ```
 
 Plus d'informations sur le [Github](https://github.com/djmaze/resticker)
+
+## Domotique
+
+Stack pour [Home Assistant](https://www.home-assistant.io/)
+
+**compose.yml**
+
+```yml
+services:
+  hass:
+    image: homeassistant/home-assistant
+    container_name: hass
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./hass-config:/config
+      - /etc/localtime:/etc/localtime:ro
+      - ./video:/config/www/video
+      - ./ssh:/root/.ssh
+    devices:
+      - /dev/ttyUSB0:/dev/ttyUSB0
+```
+
+Remplacer `ttyUSB0` par l'emplacement du dongle USB Zigbee, Z-Wave ou autre.
