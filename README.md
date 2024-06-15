@@ -879,7 +879,7 @@ Ici l'idée est d'utiliser [Restic](https://restic.readthedocs.io/en/stable/) av
 
 ### SFTP
 
-Service SSH dockerisé
+Service SSH dockerisé à configurer sur la machine qui accueillira des sauvegardes
 
 **compose.yml**
 
@@ -926,7 +926,7 @@ Plus d'infos sur le [Github](https://github.com/atmoz/sftp)
 
 ### Restic
 
-Nous évoquerons de deux versions, une avec GUI **Backrest** et une sans **Resticker**. 
+Nous évoquerons deux versions, une avec GUI **Backrest** et une sans **Resticker**. 
 
 #### Backrest
 
@@ -1002,7 +1002,7 @@ Plus d'infos sur le [Github](https://github.com/garethgeorge/backrest)
 
 #### Resticker
 
-Resticker est un Restic dockerisé (sans GUI)
+Resticker est un Restic dockerisé sans GUI avec une configurations simplifiée dans des variables d'environnement.
 
 **compose.yml**
 
