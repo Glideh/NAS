@@ -945,7 +945,7 @@ services:
       - ./backrest/config:/config
       - ./backrest/cache:/cache
       - ./backrest/source:/source:ro # Données à sauvegarder
-      - ./backrest/ssh:/ssh # Config & clés SSD
+      - ./backrest/ssh:/root/.ssh # Config & clés SSD
     environment:
       - BACKREST_DATA=/data
       - BACKREST_CONFIG=/config/config.json
@@ -979,8 +979,14 @@ Host <alias>
   Hostname <domaine>
   User <utilisateur>
   Port <port-sftp>
-  IdentityFile /ssh/id_rsa
-  UserKnownHostsFile /ssh/known_hosts
+```
+
+- Appliquer les bonnes permissions
+
+```
+chmod 700 backrest/ssh
+chmod 600 backrest/ssh/*
+sudo chown -R root:root backrest/ssh/
 ```
 
 - Une fois le service lancé, accéder au GUI avec un navigateur sur le port `9898`
@@ -989,7 +995,6 @@ Host <alias>
 ```yml
 uri: sftp:<alias>:backup
 password: <mot-de-passe-pour-chiffrer-les-sauvegardes>
-flags: -o sftp.args="-F /ssh/config"
 ```
 
 Exemple:
