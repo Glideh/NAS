@@ -462,10 +462,13 @@ scrape_configs:
       - smartctl-exporter:9633
 ```
 
-Comme `node-exporter` tourne sur l'hôte on utilise ici l'IP de l'hôte 172.17.0.1 par défaut définie par Docker.  
+Comme `node-exporter` tourne sur l'hôte, on utilise ici l'IP de l'hôte 172.17.0.1 par défaut définie par Docker.  
 On est censé [pouvoir y accéder par `host.docker.internal`](https://stackoverflow.com/a/24326540/305189) mais ça n'a pas fonctionné chez moi.
 
-Attention, le node-exporter peut dépasser le temps max de réponse pour prometheus. Dans ce cas il est possible de réduire le périmètre des métriques, exemple:
+Une fois les services lancés, vérifier sur le GUI de Prometheus (ici port 9090) que les agents (exporters) sont bien connectés dans l'onglet **Status/Target**.
+
+![Prometheus](images/prometheus.png)
+Attention, le node-exporter peut dépasser le temps max de réponse pour prometheus (onglet **Status/Target** pour voir le temps de récupération des métriques "Last Scrape"). Dans ce cas il est possible de réduire le périmètre des métriques, exemple:
 
 **compose.yml**
 
@@ -950,6 +953,7 @@ services:
       - BACKREST_DATA=/data
       - BACKREST_CONFIG=/config/config.json
       - XDG_CACHE_HOME=/cache
+      - TZ=Europe/Paris
     ports:
       - "9898:9898"
 ```
@@ -1095,3 +1099,74 @@ services:
 ```
 
 Remplacer `ttyUSB0` par l'emplacement du dongle USB Zigbee, Z-Wave ou autre.
+
+## Mises à jour
+
+[Diun](https://github.com/crazy-max/diun) permet de surveiller les mises à jour disponibles des services docker (Images).
+Il peut en notifier [Gotify](https://github.com/gotify/server) qui peut à son tour envoyer l'information sur téléphone.
+
+**compose.yml**
+
+```yml
+services:
+  diun:
+    image: crazymax/diun:latest
+    container_name: diun
+    restart: unless-stopped
+    command: serve
+    volumes:
+      - ./diun-data:/data
+      - ./diun.yml:/diun.yml:ro # Configuration à créer ci-après
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - TZ=Europe/Paris
+      - CONFIG=/diun.yml
+    depends_on:
+      - gotify
+  gotify:
+    image: gotify/server:latest
+    container_name: gotify
+    restart: unless-stopped
+    volumes:
+      - ./gotify-data:/app/data
+    environment:
+      - TZ=Europe/Paris
+    ports:
+      - "81:80"
+```
+
+**diun.yml**
+
+```yml
+watch:
+  schedule: "0 * * * *"
+
+providers:
+  docker:
+    watchByDefault: true
+
+notif:
+  gotify:
+    endpoint: http://gotify
+    token: <token> # À créer depuis le GUI de Gotify
+    templateTitle: |
+      {{ .Entry.Image.Path }}: {{ if (eq .Entry.Status "new") }}Disponible{{ else }}Nouvelle version{{ end }}
+    templateBody: |
+      Le tag Docker {{ if .Entry.Image.HubLink }}[**{{ .Entry.Image }}**]({{ .Entry.Image.HubLink }}){{ else }}**{{ .Entry.Image }}**{{ end }} {{ if (eq .Entry.Status "new") }}est disponible{{ else }}a été mis à jour{{ end }} sur le registry {{ .Entry.Image.Domain }}.
+```
+
+* Depuis le **GUI de Gotify** (ici sur le port 81):
+  * Créer l'utilisateur principal
+  * Générer un jeton d'app
+  * Et le coller dans diun.yml
+
+![Gotify](images/gotify.png)
+
+* Depuis le **téléphone**:
+  * Installer l'application Gotify
+  * Générer un jeton de client (depuis le GUI de Gotify)
+  * L'utiliser pour se connecter sur l'application mobile
+
+Dans cet exemple de configuration, toutes les heures Diun va vérifier si il existe une mise à jour pour un des services actifs (en respectant le tag défini), envoyer l'information à Gotify le cas échant qui fera apparaitre la notification sur le téléphone.
+
+Attention aux tags, par exemple si un service Docker a été défini sur le tag 2.5.0 et qu'une version 2.6.0 devient disponible, il n'y aura pas de notification. Ce comportement peut être réglé [ici](https://crazymax.dev/diun/config/)
