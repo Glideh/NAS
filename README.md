@@ -119,7 +119,7 @@ sudo mdadm --create --verbose /dev/md0 --level=5 --raid-devices=8 /dev/sda /dev/
 Formatez votre raid en ext4:
 
 ```bash
-sudo mdadm --create --verbose /dev/md0 --level=5 --raid-devices=8 /dev/sda /dev/sdb /dev/sdc /dev/sdd /dev/sde /dev/sdf /dev/sdg /dev/sdh
+sudo mkfs.ext4 /dev/md0
 ```
 
 Créez le répertoire où vous voulez monter votre filesystem:
