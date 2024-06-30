@@ -1219,3 +1219,25 @@ notif:
 Dans cet exemple de configuration, toutes les heures Diun va vérifier si il existe une mise à jour pour un des services actifs (en respectant le tag défini), envoyer l'information à Gotify le cas échant qui fera apparaitre la notification sur le téléphone.
 
 Attention aux tags, par exemple si un service Docker a été défini sur le tag 2.5.0 et qu'une version 2.6.0 devient disponible, il n'y aura pas de notification. Ce comportement peut être réglé [ici](https://crazymax.dev/diun/config/)
+
+## Plex
+
+Stack pour [Plex](https://github.com/plexinc/pms-docker)
+
+**compose.yml**
+
+```yml
+services:
+  plex:
+    container_name: plex
+    image: plexinc/pms-docker
+    restart: unless-stopped
+    volumes:
+      - /volume1/vidz:/vidz # Exemple de répertoire de vidéos
+      - ./config:/config
+    environment:
+      - TZ=Europe/Paris
+      - PLEX_UID=1000
+      - PLEX_GID=1000
+    network_mode: host
+```
