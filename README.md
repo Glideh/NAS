@@ -94,9 +94,13 @@ Il est possible de faire du Raid classique ou du RaidZ
 
 ## Raid classique
 
-Vérifiez les noms de vos disques en faisant:
+- Vérifier les noms des disques:
 
-Exemple Output:
+```bash
+ll /dev | grep sd
+```
+
+Exemple:
 
 ```bash
 ll /dev | grep sd
@@ -109,35 +113,35 @@ brw-rw----  1 root disk      8,    80 Jun 23 12:51 sdf
 brw-rw----  1 root disk      8,    96 Jun 23 12:51 sdg
 brw-rw----  1 root disk      8,   112 Jun 23 12:51 sdh
 ```
-
-Créez le raid:
+- Créer le raid:
 
 ```bash
 sudo mdadm --create --verbose /dev/md0 --level=5 --raid-devices=8 /dev/sda /dev/sdb /dev/sdc /dev/sdd /dev/sde /dev/sdf /dev/sdg /dev/sdh
 ```
 
-Formatez votre raid en ext4:
+- Formater le raid en ext4:
 
 ```bash
 sudo mkfs.ext4 /dev/md0
 ```
 
-Créez le répertoire où vous voulez monter votre filesystem:
+Créer le répertoire où le raid sera monté:
 
 ```bash
 sudo mkdir -p /media/volume
 ```
 
-Vous pouvez monter votre raid directement ou le faire monter automatiquement au démarrage en éditant votre fstab:
+Il est possible de monter le raid directement ou le faire monter automatiquement au démarrage en modifiant le fstab:
 
 ```bash
 mount /dev/md0 /media/volume
 ```
 
-Pour le fstab, ajouter la ligne suivante en root:
+Pour le fstab, ajouter la ligne suivante dans `/etc/fstab`:
 
 ```bash
-nano /etc/fstab
+sudo nano /etc/fstab
+
 /dev/md0 /media/volume ext4 defaults 0 0
 ```
 
