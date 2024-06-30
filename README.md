@@ -25,7 +25,15 @@ Nous avons essayé de trouver un bon compromis budget (~**500€**) / performanc
 | **Carte réseau 10Gb**  | [Aliex Intel X520](https://fr.aliexpress.com/item/1005005503868174.html)                            |   35€ |  |
 | **Câble DAC**  | [Aliex 3 mètres](https://fr.aliexpress.com/item/1005006118860005.html)                            |   13€ |  |
 
-La consommation électrique constatée avec le matériel ci-dessus (4 ventilateurs 12") est de **80W** avec **8 SSD**, **120W** avec **16 SSD**
+La consommation électrique constatée avec le matériel ci-dessus (4 ventilateurs 12") est de
+- **50W** sans disque
+- **80W** avec **8 SSD** (~160€ par an)
+- **115W** avec **8 HDD** (~230€ par an)
+- **120W** avec **16 SSD** (~240€ par an)
+
+_À hauteur de 0.2276€ du kWh (EDF 2024) pour un fonctionnement 24/24_
+
+Nous constatons une consommation moyenne d'environ **8W** par HDD et **4W** par SSD
 
 # Le contrôleur SAS: HBA
 
@@ -416,6 +424,8 @@ Test de débit avec Speedtest en utilisant le matériel en question (et une boit
 ![Speedtest](images/speedtest.jpg)
 
 # Services
+
+[Liste réputée et maintenue de services auto-hébergés](https://github.com/awesome-selfhosted/awesome-selfhosted)
 
 ## Surveillance
 
