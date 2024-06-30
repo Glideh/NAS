@@ -112,14 +112,10 @@ Exemple:
 
 ```bash
 ll /dev | grep sd
-brw-rw----  1 root disk      8,     0 Jun 23 12:51 sda
 brw-rw----  1 root disk      8,    16 Jun 23 12:51 sdb
 brw-rw----  1 root disk      8,    32 Jun 23 12:51 sdc
 brw-rw----  1 root disk      8,    48 Jun 23 12:51 sdd
-brw-rw----  1 root disk      8,    64 Jun 23 12:51 sde
-brw-rw----  1 root disk      8,    80 Jun 23 12:51 sdf
-brw-rw----  1 root disk      8,    96 Jun 23 12:51 sdg
-brw-rw----  1 root disk      8,   112 Jun 23 12:51 sdh
+
 ```
 
 Ou plus précisément en utilisant lsblk:
@@ -143,7 +139,7 @@ sr0                        11:0    1 1024M  0 rom
 - Créer le raid:
 
 ```bash
-sudo mdadm --create --verbose /dev/md0 --level=5 --raid-devices=8 /dev/sda /dev/sdb /dev/sdc /dev/sdd /dev/sde /dev/sdf /dev/sdg /dev/sdh
+sudo mdadm --create --verbose /dev/md0 --level=5 --raid-devices=3 /dev/sdb /dev/sdc /dev/sdd
 ```
 
 - Formater le raid en ext4:
@@ -169,8 +165,12 @@ Pour le fstab, ajouter la ligne suivante dans `/etc/fstab`:
 ```bash
 sudo nano /etc/fstab
 
-/dev/md0 /media/volume ext4 defaults 0 0
+/dev/md0 /media/volume ext4 nofail 0 0
 ```
+
+Notez le "nofail" en 4 éme colonne, cette option est utile, car si le raid est cassé, au démarrage de votre server la partion zobbée qui ne sera donc pas montée, n'empêchera pas votre système de booter.
+
+# Troubleshooting
 
 Il est possible de vérifier l'état du raid avec cette commande mdadm:
 
@@ -207,6 +207,49 @@ Consistency Policy : resync
        1       8       32        1      active sync   /dev/sdc
        3       8       48        2      active sync   /dev/sdd
 ```
+
+Si un disque part en zob le raid passera en "degraded", vous verrez le disque foiré qui sera indiqué "removed"
+
+```bash
+osboxes@osboxes:/media$ sudo mdadm --detail /dev/md0
+/dev/md0:
+           Version : 1.2
+     Creation Time : Sun Jun 30 12:14:04 2024
+        Raid Level : raid5
+        Array Size : 4188160 (3.99 GiB 4.29 GB)
+     Used Dev Size : 2094080 (2045.00 MiB 2144.34 MB)
+      Raid Devices : 3
+     Total Devices : 3
+       Persistence : Superblock is persistent
+
+       Update Time : Sun Jun 30 12:16:40 2024
+             State : clean, degraded
+    Active Devices : 3
+   Working Devices : 3
+    Failed Devices : 0
+     Spare Devices : 0
+
+            Layout : left-symmetric
+        Chunk Size : 512K
+
+Consistency Policy : resync
+
+              Name : osboxes:0  (local to host osboxes)
+              UUID : 0726cf1c:276d6360:4423d128:8fbd9d0b
+            Events : 18
+
+    Number   Major   Minor   RaidDevice State
+       0       8       16        0      active sync   /dev/sdb
+       1       8       32        1      active sync   /dev/sdc
+       3       8       48        2      removed
+```
+
+On voille ici que le disque "sdd" est manquant, pour savoir quel est sont S/N il suffit de lancer la commande suivante:
+
+```bash
+sudo smartctl -a /dev/sdd
+```
+Ainsi vous savez quel disque il faut changer
 
 ## RaidZ
 
