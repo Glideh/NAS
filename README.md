@@ -168,9 +168,9 @@ sudo nano /etc/fstab
 /dev/md0 /media/volume ext4 nofail 0 0
 ```
 
-Notez le "nofail" en 4 éme colonne, cette option est utile, car si le raid est cassé, au démarrage de votre server la partion zobbée qui ne sera donc pas montée, n'empêchera pas votre système de booter.
+Noter le "nofail" en 4ème colonne, cette option est utile, car si le raid est cassé, au démarrage du server la partion zobbée qui ne sera donc pas montée, n'empêchera pas le système de booter.
 
-# Troubleshooting
+### Troubleshooting
 
 Il est possible de vérifier l'état du raid avec cette commande mdadm:
 
@@ -208,7 +208,7 @@ Consistency Policy : resync
        3       8       48        2      active sync   /dev/sdd
 ```
 
-Si un disque part en zob le raid passera en "degraded", vous verrez le disque foiré qui sera indiqué "removed"
+Si un disque part en zob le raid passera en "degraded", nous verrons le disque foiré qui sera indiqué "removed"
 
 ```bash
 osboxes@osboxes:/media$ sudo mdadm --detail /dev/md0
@@ -244,12 +244,12 @@ Consistency Policy : resync
        3       8       48        2      removed
 ```
 
-On voille ici que le disque "sdd" est manquant, pour savoir quel est sont S/N il suffit de lancer la commande suivante:
+On voit ici que le disque "sdd" est manquant, pour savoir quel est sont S/N il suffit de lancer la commande suivante:
 
 ```bash
 sudo smartctl -a /dev/sdd
 ```
-Ainsi vous savez quel disque il faut changer
+Ainsi nous savons quel disque il faut changer
 
 ## RaidZ
 
