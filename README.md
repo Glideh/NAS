@@ -102,13 +102,13 @@ Il est possible de faire du Raid classique ou du RaidZ
 
 ## Raid classique
 
-- Vérifier les noms des disques que vous voulez utiliser dans votre raid:
+- Vérifier les noms des disques à utiliser dans le raid
 
 ```bash
 ll /dev | grep sd
 ```
 
-Exemple:
+Exemple
 
 ```bash
 ll /dev | grep sd
@@ -118,9 +118,9 @@ brw-rw----  1 root disk      8,    48 Jun 23 12:51 sdd
 
 ```
 
-Ou plus précisément en utilisant lsblk:
+Ou plus précisément en utilisant lsblk
 
-Exemple:
+Exemple
 
 ```bash
 osboxes@osboxes:~$ sudo lsblk
@@ -136,31 +136,31 @@ sdd                         8:48   0    2G  0 disk
 sr0                        11:0    1 1024M  0 rom
 ```
 
-- Créer le raid:
+- Créer le raid
 
 ```bash
 sudo mdadm --create --verbose /dev/md0 --level=5 --raid-devices=3 /dev/sdb /dev/sdc /dev/sdd
 ```
 
-- Formater le raid en ext4:
+- Formater le raid en ext4
 
 ```bash
 sudo mkfs.ext4 /dev/md0
 ```
 
-Créer le répertoire où le raid sera monté:
+Créer le répertoire où le raid sera monté
 
 ```bash
 sudo mkdir -p /media/volume
 ```
 
-Il est possible de monter le raid directement ou le faire monter automatiquement au démarrage en modifiant le fstab:
+Il est possible de monter le raid directement ou le faire monter automatiquement au démarrage en modifiant le fstab
 
 ```bash
 mount /dev/md0 /media/volume
 ```
 
-Pour le fstab, ajouter la ligne suivante dans `/etc/fstab`:
+Pour le fstab, ajouter la ligne suivante dans `/etc/fstab`
 
 ```bash
 sudo nano /etc/fstab
@@ -170,9 +170,9 @@ sudo nano /etc/fstab
 
 Noter le "nofail" en 4ème colonne, cette option est utile, car si le raid est cassé, au démarrage du server la partion zobbée qui ne sera donc pas montée, n'empêchera pas le système de booter.
 
-### Troubleshooting
+### Dépannage
 
-Il est possible de vérifier l'état du raid avec cette commande mdadm:
+Il est possible de vérifier l'état du raid avec cette commande mdadm
 
 ```bash
 osboxes@osboxes:/media$ sudo mdadm --detail /dev/md0
@@ -244,11 +244,12 @@ Consistency Policy : resync
        3       8       48        2      removed
 ```
 
-On voit ici que le disque "sdd" est manquant, pour savoir quel est sont S/N il suffit de lancer la commande suivante:
+On voit ici que le disque "sdd" est manquant, pour savoir quel est sont S/N il suffit de lancer la commande suivante
 
 ```bash
 sudo smartctl -a /dev/sdd
 ```
+
 Ainsi nous savons quel disque il faut changer
 
 ## RaidZ
