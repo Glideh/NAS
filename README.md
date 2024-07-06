@@ -1358,3 +1358,118 @@ services:
       - PLEX_GID=1000
     network_mode: host
 ```
+## Nextclaude
+
+Trois containers:
+
+1- Redis sert pour le cache.
+
+2- Une DB mariadDB.
+
+3- Et le container applicatif en soit.
+
+```yml
+version: '3.8'
+
+services:
+  redis:
+    image: redis:latest
+    container_name: redis-nextloud
+    restart: unless-stopped
+    networks:
+      - traefik
+
+  db:
+    image: mariadb:latest
+    container_name: db-nextloud
+    restart: unless-stopped
+    networks:
+      - traefik
+    volumes:
+      - ${NCMARIADB_DB_PATH}
+      - ${LOCALTIME}
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE_NC}
+      MYSQL_USER: ${MYSQL_USER_NC}
+
+  nextcloud-app:
+    image: nextcloud:latest
+    container_name: nextcloud-app
+    restart: unless-stopped
+    user: "xxxx:yyy"
+    networks:
+      - traefik
+    links:
+      - db:db
+      - redis:redis
+    volumes:
+      - ${NC_APACHE2_PATH} #fichier de config pour Apache à monter ici: :/etc/apache2/apache2.conf
+      - ${NC_REDIS_FILE_PATH} #fichier de config Redis à monter ici: :/usr/local/etc/php/conf.d/redis-session.ini
+      - ${NC_HTML_PATH} #dossier à monter ici: :/var/www/html
+      - ${NC_CONFIG_PATH} #dossier à monter ici: :/var/www/html/config
+      - ${NC_DATA_PATH} #dossier à monter ici: :/var/www/html/data
+      - ${NC_VOLUME1} #Vos fichers locaux que vous souaitez avoir dans le Nextclaude exemple: /media/volume/photos_pornos:/pr0n
+    environment:
+      PHP_UPLOAD_LIMIT: 30G
+      PHP_MEMORY_LIMIT: 30G
+      VIRTUAL_HOST: prout.prout.pr
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE_NC}
+      MYSQL_USER: ${MYSQL_USER_NC}
+      MYSQL_HOST: db
+      REDIS_HOST: redis
+```
+
+Pour la Nextclaude et la DB il faudra déclarer quelques variables dans votre fichiers de variables d'environnements.
+
+```bash
+MYSQL_ROOT_PASSWORD: prout95
+MYSQL_PASSWORD: chouchouette
+MYSQL_DATABASE_NC: nextcloud
+MYSQL_USER_NC: nextcloud
+
+NC_APACHE2_PATH: /media/volume/path/to/nextcloud/apache2.conf:/etc/apache2/apache2.conf
+NC_REDIS_FILE_PATH: /media/volume/path/to/nextcloud/redis-session.ini:/usr/local/etc/php/conf.d/redis-session.ini
+NC_HTML_PATH: /media/volume//path/to/nextcloud/nextcloud_nextcloud:/var/www/html
+NC_CONFIG_PATH: /media/volume/path/to//nextcloud/app/config:/var/www/html/config
+NC_CUSTOM_APPS_PATH: /media/volume/path/to//nextcloud/app/custom_apps:/var/www/html/custom_apps
+NC_DATA_PATH: /media/volume/path/to/nextcloud/data:/var/www/html/data
+NC_VOLUME1: /media/volume/photos_pornos:/pr0n
+```
+
+Pour s'assurer des droits qui seront appliqués lorsque vous copierez des fichiers depuis NC, il faut modifier la ligne suivante:
+
+```php
+'localstorage.umask' => 2,
+```
+
+dans le fichier de conf php situé dans /media/volume/path/to/nextcloud/app/config/config.php.
+
+Pour Traefik, la configuration du routeur Nextclaude sera un peu particulière parce qu'il faudra lui ajouter des middlewares:
+
+```yml
+http:
+  routers:
+    nextcloud:
+      service: nextcloud
+      rule: "Host(`nextcloud.yourdomain.com`)"
+      tls:
+        certResolver: yourdomain
+      entrypoints: websecure
+      middlewares: [hsts-headers@file, dav-replace@file]
+  services:
+    nextcloud:
+      loadBalancer:
+        servers:
+          - url: "http://nextcloud-app"
+  middlewares:
+    hsts-headers:
+      headers:
+        stsSeconds: 315360000
+    dav-replace:
+      replacePathRegex:
+        regex: "https://(.*)/.well-known/(card|cal)dav"
+        replacement: "https://${1}/remote.php/dav/"
+```
