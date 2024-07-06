@@ -316,6 +316,49 @@ sudo zpool create volume2 raidz SSD11 SSD12 SSD13 SSD14 SSD21 SSD22 SSD23 SSD24 
 
 - Les volumes sont maintenant visibles et utilisables dans `/volume1` & `/volume2`
 
+### Replacer un disque
+
+Si la commande suivante affiche un disque en erreur
+
+```
+zpool status
+```
+
+Exemple
+
+```
+  pool: volume1
+ state: DEGRADED
+status: One or more devices are faulted in response to persistent errors.
+        Sufficient replicas exist for the pool to continue functioning in a
+        degraded state.
+action: Replace the faulted device or use 'zpool clear' to mark the device
+        repaired.
+   see: https://openzfs.github.io/openzfs-docs/msg/ZFS-8000-4J
+  scan: resilvered 80.1M in 00:00:01 with 0 errors on Fri May 24 14:55:33 2024
+config:
+
+	NAME                     STATE     READ WRITE CKSUM
+	volume1                  DEGRADED     0     0     0
+	  raidz1-0               DEGRADED     0     0     0
+	    SSD41                ONLINE       0     0     0
+	    SSD42                ONLINE       0     0     0
+	    SSD43                ONLINE       0     0     0
+	    SSD44                FAULTED      0    32     0  too many errors
+	    SSD33                ONLINE       0     0     0
+	    SSD34                ONLINE       0     0     0
+```
+
+- Éteindre la machine (sauf si racks avec backplane auquel cas il faut couper le disque avec `zpool offline`)
+- Remplacer physiquement le disque
+- Allumer la machine
+- Repérer l'identifiant du nouveau disque en fouillant dans `/dev/by-*` avec `smartctl`
+- Réaffecter le disque
+
+```
+sudo zpool replace volume1 SSD44
+```
+
 ## Températures
 
 Depuis un terminal il est possible de voir les températures de toutes les sondes (HBA, disques, processeur, NVMe, etc.)
