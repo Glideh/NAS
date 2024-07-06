@@ -1505,7 +1505,7 @@ Pour s'assurer des droits qui seront appliqués lorsque vous copierez des fichie
 'localstorage.umask' => 2,
 ```
 
-dans le fichier de conf php situé dans /media/volume/path/to/nextcloud/app/config/config.php.
+dans le fichier de conf php situé dans `/media/volume/path/to/nextcloud/app/config/config.php`
 
 Pour Traefik, la configuration du routeur Nextclaude sera un peu particulière parce qu'il faudra lui ajouter des middlewares:
 
