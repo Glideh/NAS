@@ -252,13 +252,42 @@ Consistency Policy : resync
        3       8       48        2      removed
 ```
 
-On voit ici que le disque "sdd" est manquant, pour savoir quel est sont S/N il suffit de lancer la commande suivante
+Détecter le disque cassé:
 
 ```bash
-sudo smartctl -a /dev/sdd
+cat /proc/mdstat
+Personalities : [linear] [multipath] [raid0] [raid1] [raid5] [raid4] [raid6] [raid10]
+md0 : active raid1 sdc[1] sdb[0] sdd[2](F)
+      976773168 blocks [2/1] [U_]
+```	  
+
+Ici on voit que le `sdd` est taggé en Faulty (F).
+
+Retirer le disque du raid:
+
+```bash
+mdadm --manage /dev/md0 --remove /dev/sdd
 ```
 
-Ainsi nous savons quel disque il faut changer
+Remplacer le disque physiquement
+
+Copier la table de partition sur le nouveau disque:
+
+```bash
+sfdisk -d /dev/sda | sfdisk /dev/sdd
+```
+
+Ajouter le disque à votre array en vérifiant la lettre du volume avant `sdX`:
+
+```bash
+mdadm --manage /dev/md0 --add /dev/sdX
+```
+
+Verifier l'état du Raid:
+
+```bash
+sudo mdadm --detail /dev/md0
+```
 
 ## RaidZ
 
