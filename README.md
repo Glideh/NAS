@@ -623,6 +623,17 @@ services:
     ports:
       - "9633:9633"
 
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    ports:
+    - 8080:8080
+    volumes:
+    - /:/rootfs:ro
+    - /var/run:/var/run:rw
+    - /sys:/sys:ro
+    - /var/lib/docker/:/var/lib/docker:ro
+
   prometheus:
     container_name: prometheus
     image: prom/prometheus
@@ -651,6 +662,7 @@ volumes:
 
 - `node-exporter` récupère les métriques classiques du système, il doit tourner directement sur le contexte de l'hôte pour avoir accès au matériel de manière non cloisonnée
 - `smartctl-exporter` récupère les métriques des disques
+- `cadvisor` collecte les données relatives à Docker
 - `prometheus` rassemble les données et les met à disposition de Grafana
 - `grafana` vient lire les données sur Prometheus
 
@@ -669,6 +681,10 @@ scrape_configs:
     static_configs:
     - targets:
       - smartctl-exporter:9633
+  - job_name: cadvisor
+    static_configs:
+    - targets:
+      - cadvisor:8080
 ```
 
 Comme `node-exporter` tourne sur l'hôte, on utilise ici l'IP de l'hôte 172.17.0.1 par défaut définie par Docker.  
@@ -716,6 +732,7 @@ Il est aussi possible d'augmenter le délai d'expiration
 #...
 ```
 
+/!\ Cadvisor demande exclusivement à être attaqué en utilisant le port 8080 sinon Prometheus se voit refuser la connexion, ce port étant déjà occupé par la console Traefik, il faut donc rediriger le port 8080 du container Traefik vers par exemple le 8085 du host.
 
 ![Grafana](images/grafana.png)
 
