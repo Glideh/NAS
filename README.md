@@ -100,15 +100,15 @@ Il existe aussi ce type de cages:
 
 Il est possible de faire du Raid classique ou du RaidZ
 
-## Raid classique
-
 /!\ Considérations avec les disques d'entreprise
 
 Ces disques sont formatés par blocs de 520 bytes, un Linux standard ne lit pas les disques formatés avec cette taille de blocs, il faut donc les passer en 512 bytes.
 
 ```bash
-sg_format --format --size=512 /dev/sgX
+sudo sg_format --format --size=512 -Q /dev/sdX
 ```
+
+## Raid classique
 
 - Vérifier les noms des disques à utiliser dans le raid
 
