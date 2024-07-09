@@ -779,7 +779,8 @@ services:
     restart: unless-stopped
     environment:
       ACCOUNT_glide: <hash-user>
-        [volume1]
+      SAMBA_VOLUME_CONFIG_vol1: |
+        [vol1]
           path = /volume1
           valid users = glide
           read only = no
