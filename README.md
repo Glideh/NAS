@@ -650,6 +650,123 @@ Nous venons d'**ajouter 100Go** au volume avec l'option `-L` et d'**étendre le 
 
 [Source](https://4sysops.com/archives/extending-lvm-space-in-ubuntu/)
 
+## Gestion
+
+Les services mentionnés ci-après utilisent tous **Docker** avec son extention **Compose**.
+
+Nous proposons ici une manière simple des les installer et de les gérer, sans aller jusqu'à utiliser Kubernetes qui serait sans doute surdimentionné pour une utilisation privée:
+
+- Créer un répertoire pour chaque service depuis le `home` de l'utilisateur principal (pour y avoir accès facilement à la connexion SSH)
+
+```
+mkdir ~/<service>
+```
+
+- Créer la stack pour le service
+
+```
+nano ~/<service>/compose.yml
+```
+
+- Définir des fonctions pour gérer les services
+
+```
+nano ~/.bash_aliases
+```
+
+```sh
+alias compose='docker compose'
+
+compose_do() {
+  if [ $# -eq 2 ]
+    then
+      compose --project-directory ~/$2 $1
+    else
+      compose $1
+  fi
+}
+
+up() {
+  compose_do "up -d" $1
+}
+
+down() {
+  compose_do down $1
+}
+
+pull() {
+  compose_do pull $1
+}
+
+update() {
+  pull $1
+  up $1
+}
+```
+
+Ces fonctions fournissent des raccourcis pour gérer les services. L'avantage est qu'on peut utiliser la complétion du système de fichier pour récupérer le nom des stacks
+
+### Alias `compose`
+
+Ici avec Plex
+
+```
+~/plex$ compose ps
+NAME      IMAGE                COMMAND   SERVICE   CREATED       STATUS                PORTS
+plex      plexinc/pms-docker   "/init"   plex      12 days ago   Up 4 days (healthy)   
+```
+
+```sh
+~/plex$ compose logs
+plex  | [s6-init] making user provided files available at /var/run/s6/etc...exited 0.
+plex  | [s6-init] ensuring user provided files have correct perms...exited 0.
+plex  | [fix-attrs.d] applying ownership & permissions fixes...
+plex  | [fix-attrs.d] done.
+#[...]
+```
+
+### Lancer une stack
+
+Depuis le home de l'utilisateur
+
+```
+~$ up <service>
+```
+
+ou depuis le répertoire du service
+
+```
+~/service$ up
+```
+
+### Stopper une stack
+
+Depuis le home de l'utilisateur
+
+```
+~$ down <service>
+```
+
+ou depuis le répertoire du service
+
+```
+~/service$ down
+```
+
+### Mettre à jour une stack
+
+Depuis le home de l'utilisateur
+
+```
+~$ update <service>
+```
+
+ou depuis le répertoire du service
+
+```
+~/service$ update
+```
+
 # Services
 
 [Liste réputée et maintenue de services auto-hébergés](https://github.com/awesome-selfhosted/awesome-selfhosted)
@@ -1474,6 +1591,8 @@ notif:
 Dans cet exemple de configuration, toutes les heures Diun va vérifier si il existe une mise à jour pour un des services actifs (en respectant le tag défini), envoyer l'information à Gotify le cas échant qui fera apparaitre la notification sur le téléphone.
 
 Attention aux tags, par exemple si un service Docker a été défini sur le tag 2.5.0 et qu'une version 2.6.0 devient disponible, il n'y aura pas de notification. Ce comportement peut être réglé [ici](https://crazymax.dev/diun/config/)
+
+Pour la gestion et la mise à jour des stacks docker, des [fonctions sont proposées ici](#gestion)
 
 ## Plex
 
