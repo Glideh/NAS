@@ -608,9 +608,9 @@ Nous avons personnellement choisi **Ubuntu Server minimized**, majoritairement p
 
 ## LVM
 
-Par défaut, certains OS réservent une **part inférieure** à l'espace total disponible du disque pour la création du **système de fichier principal**, ceci pour plusieurs raisons (notamment de flexibilité, performance et sécurité). C'est pour cette raison que LVM est souvent utilisé par défaut.
+Par défaut, certains OS réservent une **part inférieure** à l'espace total disponible du disque pour la création du **système de fichier principal**, ceci pour plusieurs raisons (notamment de flexibilité, performance et sécurité). C'est pour cette raison que **LVM** est souvent utilisé par défaut.
 
-En cas de saturation d'un volume LVM utilisé pour le système de fichier de l'OS:
+En cas de **saturation** d'un volume LVM utilisé pour le système de fichier de l'OS:
 
 ```sh
 df -h
@@ -621,7 +621,7 @@ Filesystem                         Size  Used Avail Use% Mounted on
 /dev/mapper/ubuntu--vg-ubuntu--lv   98G   85G    9G  90% /
 #...
 ```
-Le volume `/dev/mapper/ubuntu--vg-ubuntu--lv` est ici utilisé à 90%. Il est temps de l'étendre
+Le volume `/dev/mapper/ubuntu--vg-ubuntu--lv` est ici **utilisé à 90%**. Il est temps de l'étendre
 
 ```
 sudo vgs
@@ -630,7 +630,7 @@ sudo vgs
   VG        #PV #LV #SN Attr   VSize    VFree   
   ubuntu-vg   1   1   0 wz--n- <463.76g <363.76g
 ```
-Comme nous pouvons le voir, nous disposons de ~364G supplémentaires
+Comme nous pouvons le voir, nous disposons de **~364G supplémentaires**
 
 L'extention est très simple:
 
@@ -646,7 +646,7 @@ old_desc_blocks = 13, new_desc_blocks = 25
 The filesystem on /dev/mapper/ubuntu--vg-ubuntu--lv is now 52428800 (4k) blocks long.
 ```
 
-Nous venons d'ajouter 100Go au volume avec l'option `-L` et étendu le système de fichier avec `-r`
+Nous venons d'**ajouter 100Go** au volume avec l'option `-L` et d'**étendre le système de fichier** avec `-r`
 
 [Source](https://4sysops.com/archives/extending-lvm-space-in-ubuntu/)
 
