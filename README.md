@@ -650,7 +650,7 @@ Nous venons d'**ajouter 100Go** au volume avec l'option `-L` et d'**étendre le 
 
 [Source](https://4sysops.com/archives/extending-lvm-space-in-ubuntu/)
 
-## Gestion
+## Gestion des services
 
 Les services mentionnés ci-après utilisent tous **Docker** avec son extention **Compose**.
 
@@ -1592,7 +1592,7 @@ Dans cet exemple de configuration, toutes les heures Diun va vérifier si il exi
 
 Attention aux tags, par exemple si un service Docker a été défini sur le tag 2.5.0 et qu'une version 2.6.0 devient disponible, il n'y aura pas de notification. Ce comportement peut être réglé [ici](https://crazymax.dev/diun/config/)
 
-Pour la gestion et la mise à jour des stacks docker, des [fonctions sont proposées ici](#gestion)
+Pour la gestion et la mise à jour des stacks docker, des [fonctions sont proposées ici](#gestion-des-services)
 
 ## Plex
 
