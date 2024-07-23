@@ -602,6 +602,54 @@ Test de débit avec Speedtest en utilisant le matériel en question (et une boit
 
 ![Speedtest](images/speedtest.jpg)
 
+# Système d'exploitation
+
+Nous avons personnellement choisi **Ubuntu Server minimized**, majoritairement pour des questions d'habitude, mais bien sûr n'importequel Linux fera l'affaire.
+
+## LVM
+
+Par défaut, certains OS réservent une **part inférieure** à l'espace total disponible du disque pour la création du **système de fichier principal**, ceci pour plusieurs raisons (notamment de flexibilité, performance et sécurité). C'est pour cette raison que LVM est souvent utilisé par défaut.
+
+En cas de saturation d'un volume LVM utilisé pour le système de fichier de l'OS:
+
+```sh
+df -h
+```
+```sh
+Filesystem                         Size  Used Avail Use% Mounted on
+#...
+/dev/mapper/ubuntu--vg-ubuntu--lv   98G   85G    9G  90% /
+#...
+```
+Le volume `/dev/mapper/ubuntu--vg-ubuntu--lv` est ici utilisé à 90%. Il est temps de l'étendre
+
+```
+sudo vgs
+```
+```
+  VG        #PV #LV #SN Attr   VSize    VFree   
+  ubuntu-vg   1   1   0 wz--n- <463.76g <363.76g
+```
+Comme nous pouvons le voir, nous disposons de ~364G supplémentaires
+
+L'extention est très simple:
+
+```sh
+sudo lvextend -L +100G -r /dev/mapper/ubuntu--vg-ubuntu--lv
+```
+```
+  Size of logical volume ubuntu-vg/ubuntu-lv changed from 100.00 GiB (25600 extents) to 200.00 GiB (51200 extents).
+  Logical volume ubuntu-vg/ubuntu-lv successfully resized.
+resize2fs 1.47.0 (5-Feb-2023)
+Filesystem at /dev/mapper/ubuntu--vg-ubuntu--lv is mounted on /; on-line resizing required
+old_desc_blocks = 13, new_desc_blocks = 25
+The filesystem on /dev/mapper/ubuntu--vg-ubuntu--lv is now 52428800 (4k) blocks long.
+```
+
+Nous venons d'ajouter 100Go au volume avec l'option `-L` et étendu le système de fichier avec `-r`
+
+[Source](https://4sysops.com/archives/extending-lvm-space-in-ubuntu/)
+
 # Services
 
 [Liste réputée et maintenue de services auto-hébergés](https://github.com/awesome-selfhosted/awesome-selfhosted)
@@ -1450,13 +1498,11 @@ services:
 ```
 ## Nextclaude
 
-Trois containers:
+Trois conteneurs:
 
-1- Redis sert pour le cache.
-
-2- Une DB mariadDB.
-
-3- Et le container applicatif en soit.
+1. Redis pour le cache
+2. Une DB: MariadDB
+3. L'application (php)
 
 ```yml
 version: '3.8'
@@ -1464,14 +1510,14 @@ version: '3.8'
 services:
   redis:
     image: redis:latest
-    container_name: redis-nextloud
+    container_name: nextcloud-redis
     restart: unless-stopped
     networks:
       - traefik
 
   db:
     image: mariadb:latest
-    container_name: db-nextloud
+    container_name: nextcloud-db
     restart: unless-stopped
     networks:
       - traefik
@@ -1512,7 +1558,9 @@ services:
       REDIS_HOST: redis
 ```
 
-Pour la Nextclaude et la DB il faudra déclarer quelques variables dans votre fichiers de variables d'environnements.
+Pour le Nextcloud et la DB il faudra déclarer quelques variables dans le `.env`
+
+**.env**
 
 ```bash
 MYSQL_ROOT_PASSWORD: prout95
@@ -1529,7 +1577,7 @@ NC_DATA_PATH: /media/volume/path/to/nextcloud/data:/var/www/html/data
 NC_VOLUME1: /media/volume/photos_pornos:/pr0n
 ```
 
-Pour s'assurer des droits qui seront appliqués lorsque vous copierez des fichiers depuis NC, il faut modifier la ligne suivante:
+Pour s'assurer des droits qui seront appliqués à la copie des fichiers depuis NC, il faut modifier la ligne suivante:
 
 ```php
 'localstorage.umask' => 2,
@@ -1537,7 +1585,7 @@ Pour s'assurer des droits qui seront appliqués lorsque vous copierez des fichie
 
 dans le fichier de conf php situé dans `/media/volume/path/to/nextcloud/app/config/config.php`
 
-Pour Traefik, la configuration du routeur Nextclaude sera un peu particulière parce qu'il faudra lui ajouter des middlewares:
+Pour Traefik, la configuration du routeur Nextcloud sera un peu particulière parce qu'il faudra lui ajouter des middlewares:
 
 ```yml
 http:
