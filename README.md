@@ -1151,7 +1151,8 @@ docker compose up -d
 
 ### Page d'admin
 
-La page d'admin offre un GUI permettant de gérer les utilisateurs et de configurer les options, les variables définies depuis Docker seraient alors écrasées
+La page d'admin offre un GUI permettant de gérer les utilisateurs et de configurer les options.
+Les variables définies depuis Docker seraient alors écrasées.
 
 * Générer le **jeton d'admin**
 
@@ -1165,6 +1166,7 @@ docker compose exec vaultwarden /vaultwarden hash
 ```
 docker compose up -d
 ```
+* Il devient alors possible d'accéder à l'admin avec un navigateur sur `https://<domaine>/admin`
 
 _Plus d'informations [ici](https://github.com/dani-garcia/vaultwarden/wiki/Enabling-admin-page#secure-the-admin_token)_
 
