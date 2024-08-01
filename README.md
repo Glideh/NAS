@@ -1122,7 +1122,7 @@ services:
     volumes:
       - ./data:/data
 #    ports:
-#      - 3012:3012
+#      - 3012:80
     environment:
       - TZ=Europe/Paris
 #      - SIGNUPS_ALLOWED=false
@@ -1139,7 +1139,7 @@ networks:
 docker compose up -d
 ```
 
-* **Ouvrir l'application** avec un navigateur (nom de domaine configuré sur træfik sinon directement sur le port 3012)
+* **Ouvrir l'application** avec un navigateur (nom de domaine configuré sur træfik sinon directement sur le port `3012` arbitraire)
 * **Créer un utilisateur** depuis le lien d'inscription
 * Décommenter la variable  `SIGNUPS_ALLOWED` du `compose.yml`
 * Relancer le service
