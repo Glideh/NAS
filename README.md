@@ -108,6 +108,10 @@ Ces disques sont souvent formatés par blocs de 520 octets, un Linux standard ne
 sudo sg_format --format --size=512 -Q /dev/sdX
 ```
 
+Compter environ
+- **30s** pour un **SSD de 1.5To**
+- **8h** pour un **HDD de 4To**.
+
 ## Raid classique
 
 - Vérifier les noms des disques à utiliser dans le raid
@@ -654,7 +658,7 @@ Nous venons d'**ajouter 100Go** au volume avec l'option `-L` et d'**étendre le 
 
 Les services mentionnés ci-après utilisent tous **Docker** avec son extention **Compose**.
 
-Nous proposons ici une manière simple des les installer et de les gérer, sans aller jusqu'à utiliser Kubernetes qui serait sans doute surdimentionné pour une utilisation privée:
+Nous proposons ici une manière simple des les installer et de les gérer, sans aller jusqu'à utiliser des outils comme Kubernetes qui seraient sans doute surdimentionnés pour une utilisation privée:
 
 - Créer un répertoire pour chaque service depuis le `home` de l'utilisateur principal (pour y avoir accès facilement à la connexion SSH)
 
@@ -1121,14 +1125,48 @@ services:
 #      - 3012:3012
     environment:
       - TZ=Europe/Paris
-      - WEBSOCKET_ENABLED=true
-      - ADMIN_TOKEN=${VAULTWARDEN_ADMIN_TOKEN}
+#      - SIGNUPS_ALLOWED=false
 
 networks:
   default:
     name: traefik # Avec par exemple Traefik comme reverse proxy (Exemple dans la section Traefik)
     external: true
 ```
+
+* Lancer les services
+
+```
+docker compose up -d
+```
+
+* **Ouvrir l'application** avec un navigateur (nom de domaine configuré sur træfik sinon directement sur le port 3012)
+* **Créer un utilisateur** depuis le lien d'inscription
+* Décommenter la variable  `SIGNUPS_ALLOWED` du `compose.yml`
+* Relancer le service
+```
+docker compose up -d
+```
+
+[Référence des variables](https://github.com/dani-garcia/vaultwarden/blob/main/.env.template)
+
+### Page d'admin
+
+La page d'admin offre un GUI permettant de gérer les utilisateurs et de configurer les options, les variables définies depuis Docker seraient alors écrasées
+
+* Générer le **jeton d'admin**
+
+```
+docker compose exec vaultwarden /vaultwarden hash
+```
+
+* Copier la ligne `ADMIN_TOKEN=...` dans un `.env`
+* Ajouter la variable `ADMIN_TOKEN=${ADMIN_TOKEN}` dans le `compose.yml`
+* Relancer le service
+```
+docker compose up -d
+```
+
+_Plus d'informations [ici](https://github.com/dani-garcia/vaultwarden/wiki/Enabling-admin-page#secure-the-admin_token)_
 
 ## Reverse proxy
 
