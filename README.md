@@ -1770,3 +1770,199 @@ http:
         regex: "https://(.*)/.well-known/(card|cal)dav"
         replacement: "https://${1}/remote.php/dav/"
 ```
+# Mailserver
+
+⚠️ Pour les gens vraiment deter qui n'ont pas peur des (très) vieilles technos
+
+Cette stack contiendra deux containers, un server de messagerie et un client, le dernier étant optionnel.
+
+Configuration générale:  
+  
+Voici un exemple de configuration pour Docker Compose:
+
+```yml
+services:
+  mailserver:
+    image: ghcr.io/docker-mailserver/docker-mailserver:latest
+    container_name: mailserver
+    hostname: mail.mondomain.truc
+    env_file: /path/to/my/env_file.env #fichier de configuration général pour Postfix/Dovecot/fail2ban etc.
+    restart: unless-stopped
+    network_mode: my_virtual_network
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "25:25"    # SMTP  (explicit TLS => STARTTLS, Authentication is DISABLED => use port 465/587 instead)
+      - "143:143"  # IMAP4 (explicit TLS => STARTTLS)
+      - "465:465"  # ESMTP (implicit TLS)
+      - "587:587"  # ESMTP (explicit TLS => STARTTLS)
+      - "993:993"  # IMAP4 (implicit TLS)
+    volumes:
+      - ${MAIL_DATA} #là où seront stockés vos méls
+      - ${MAIL_STATE} 
+      - ${MAIL_LOGS}
+      - ${MAIL_CONFIG}
+      - ${MAIL_LOCALTIME}
+      - ${MAIL_LETSENCRYPT} #normalement /etc/letsencrypt/:/etc/letsencrypt/ mais peut être amélioré en utilisant Traefik
+      - ${FAIL2BAN_CONF} #configuration de Fail2ban (indispensable)
+    healthcheck:
+      test: ["CMD", "ss --listening --tcp | grep -P 'LISTEN.+:smtp' || exit 1"]
+      timeout: 3s
+      retries: 0
+
+  roundcube:
+    image: roundcube/roundcubemail:latest
+    container_name: roundcube
+    restart: unless-stopped
+    network_mode: my_virtual_network
+    ports:
+      - "2500:80" #impossible d'utiliser le gros port 80 car celui-ci est déjà utilisé par Traefik
+    volumes:
+      - ${ROUNDCUBE_CONFIG} #configuration générale de Roundcube
+      - ${ROUNDCUBE_DB} #DB sqlite
+    environment:
+      ROUNDCUBEMAIL_DB_TYPE: sqlite
+      ROUNDCUBEMAIL_SKIN: elastic
+      ROUNDCUBEMAIL_DEFAULT_HOST: tls://mail.mondomain.truc
+      ROUNDCUBEMAIL_SMTP_SERVER: tls://mail.mondomain.truc
+      ROUNDCUBEMAIL_UPLOAD_MAX_FILESIZE: 30M
+```
+
+env_file.env:
+
+```bash
+MAIL_DATA: /path/to/mail-data/:/var/mail/ 
+MAIL_STATE: /path/to/mailserver/mail-state/:/var/mail-state/
+MAIL_LOGS:  /path/to/mailserver/mail-logs/:/var/log/mail/ 
+MAIL_CONFIG:/path/to/mailserver/config/:/tmp/docker-mailserver/ 
+MAIL_LOCALTIME: /etc/localtime:/etc/localtime:ro
+MAIL_LETSENCRYPT: /etc/letsencrypt/:/etc/letsencrypt/ 
+FAIL2BAN_CONF: /path/to/mailserver/fail2ban.conf:/etc/fail2ban/fail2ban.conf
+ROUNDCUBE_CONFIG: /path/to/mailserver/roundcube/www:/var/www/html 
+ROUNDCUBE_DB: /path/to/mailserver/roundcube/db/sqlite:/var/roundcube/db
+```  
+  
+Lancer la stack une première fois et créer un utilisateur:
+
+```bash
+docker exec $containername setup email add name@mondomain.truc $password
+```
+
+## DKIM:
+
+Créer votre clef DKIM (Une clé DKIM (DomainKeys Identified Mail) permet de signer numériquement les emails envoyés par un serveur de messagerie, prouvant ainsi que le message n'a pas été altéré et qu'il provient bien du domaine indiqué. Cela aide à lutter contre le spam et l'usurpation d'identité. ):
+
+```bash
+docker exec $containername setup config dkim
+```
+
+Des clefs [DKIM](https://docker-mailserver.github.io/docker-mailserver/v11.0/config/best-practices/dkim/) public et privée seront créez ici:
+
+```bash
+${MAIL_CONFIG}/config/opendkim/keys/mondomain.truc/
+```
+
+Redémarrer la stack:
+
+```bash
+docker compose down
+```
+
+```bash
+docker compose up -d
+```
+
+## Fail2ban:
+
+Fail2ban écoute les logs de connexion à votre server de messagerie, par défaut, dès qu'il rencontre une adresse IP qui tente de se connecter 3 fois sans succès en l'espace de 10 minutes, il bannit l'adresse, ce qui évite les attaques de type brute force.
+
+Vérifier que Fail@ban soit bien activé en allant dans votre fichier de configuration pour les variables d'environnement générale de Postfix/Dovecot/fail2ban etc.
+
+```bash
+nano /path/to/my/env_file.env
+```
+
+Et vérifier que la ligne suivant soit bien à "1"
+
+```bash
+ENABLE_FAIL2BAN=1
+```
+
+Et celle-ci à "drop" ou "reject"
+
+```bash
+FAIL2BAN_BLOCKTYPE=drop
+```
+
+Vous pourrez ensuite voir toutes les adresses ip yankees/anglaises et allemande qui vous attaquent sans succès:
+
+```bash
+docker exec $mailservercontainer setup fail2ban log
+```
+
+Vous pourrez également voir ces adresses bannies:
+
+```bash
+docker exec mailserver fail2ban-client status postfix
+docker exec mailserver fail2ban-client status dovecot
+```
+
+## DNS
+
+Connectez vous à votre service DNS
+
+Ajoutez ou modifiez un chant "mail.\_domainkey":
+
+Exemple:
+
+```bash
+mail.\_domainkey 3600 IN TXT "v=DKIM1; k=rsa; p=AZERTYUIOPQSDFGHJKLMWXCVBN/AZERTYUIOPQSDFGHJKLMWXCVBN/AZERTYUIOPQSDFGHJKLMWXCVBN/AZERTYUIOPQSDFGHJKLMWXCVBN/AZERTYUIOPQSDFGHJKLMWXCVBN/AZERTYUIOPQSDFGHJKLMWXCVBN/AZERTYUIOPQSDFGHJKLMWXCVBN/AZERTYUIOPQSDFGHJKLMWXCVBN"
+```
+
+Ajouter ou modifier le chant "MX" (Mailboxe)
+
+Exemple:
+
+```bash
+@	MX	10800	10 mail.mondomain.truc.
+```
+
+Ajouter ou modifiez le chant TXT pour autorisez vos MX à envoyer des méls de la part de mondomain.truc.
+
+Exemple:
+
+```bash
+@	TXT	3600	"v=spf1 mx -all" ou juste @	TXT	3600	"v=spf1 mx mail.mondomain.truc"
+```
+
+Ajouter un chant TXT pour rediriger les méls entrants vers mail.monmomain.truc
+
+Exemple:
+
+```bash
+mail	A	3600	x.x.x.x
+```
+
+Ou x.x.x.x est votre adresse public.
+
+Ajouter ou modifier le chant "\_dmarc" (Le champ DMARC dans un DNS permet de définir une politique pour gérer les emails non conformes à SPF et DKIM, aidant à protéger un domaine contre le phishing et l'usurpation d'identité, il sert aussi à mettre en place une boîte de messagerie qui recevera les résultats des tests des servers Microtsof, Google, GMX et vous diront si votre serveur est bien paramétré).
+
+```bash
+\_dmarc	TXT	10800	"v=DMARC1; p=quarantine; sp=none; fo=0; adkim=r; aspf=r; pct=100; rf=afrf; ri=86400; rua=mailto:administrator@mondomain.truc; ruf=mailto:administrator@mondomain.truc"
+```
+
+## Dernières considérations:
+
+Beaucoup de servers de messagerie comme ceux de Google, Microtsof, gmx etc. Vérifient deux choses pour être sûr que les méls viennent bien d'un server correctement parmété:
+
+1- Qu'un chant inverse soit fonctionnel sur votre adresse publique. Il faut que lorsqu'on tape:
+
+nslookup x.x.x.x
+
+L'output soit "mail.mondomain.truc" et non "freeboxsas1548487242.free.fr"
+
+Pour ça il faut aller dans les paramètres de votre abonnement Internet, exemple chez Free il faut se rendre sur "Ma Freebox" -> "Personnaliser mon reverse DNS", et mettre le chant de recherche inverse x.x.x.x => mail.mondomain.truc
+
+2- La pluspart des FAI bloquent le traffic SMTP (méls sortants de chez vous), il faut donc désactiver ce bloquage:
+
+Chez Free il faut aller dans "Ma Freebox" -> "Blocage du protocole SMTP sortant" et cliquer sur "non"
