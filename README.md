@@ -1628,7 +1628,7 @@ notif:
   * Générer un jeton de client (depuis le GUI de Gotify)
   * L'utiliser pour se connecter sur l'application mobile
 
-Dans cet exemple de configuration, toutes les heures Diun va vérifier si il existe une mise à jour pour un des services actifs (en respectant le tag défini), envoyer l'information à Gotify le cas échant qui fera apparaitre la notification sur le téléphone.
+Dans cet exemple de configuration, toutes les heures Diun va vérifier si il existe une mise à jour pour un des services actifs (en respectant le tag défini), envoyer l'information à Gotify le cas échéant qui fera apparaitre la notification sur le téléphone.
 
 Attention aux tags, par exemple si un service Docker a été défini sur le tag 2.5.0 et qu'une version 2.6.0 devient disponible, il n'y aura pas de notification. Ce comportement peut être réglé [ici](https://crazymax.dev/diun/config/)
 
@@ -1828,7 +1828,7 @@ services:
       ROUNDCUBEMAIL_UPLOAD_MAX_FILESIZE: 30M
 ```
 
-env_file.env:
+.env:
 
 ```bash
 MAIL_DATA: /path/to/mail-data/:/var/mail/ 
@@ -1859,7 +1859,7 @@ docker exec $containername setup config dkim
 Des clefs [DKIM](https://docker-mailserver.github.io/docker-mailserver/v11.0/config/best-practices/dkim/) public et privée seront créez ici:
 
 ```bash
-${MAIL_CONFIG}/config/opendkim/keys/mondomain.truc/
+${MAIL_CONFIG}/opendkim/keys/mondomain.truc/
 ```
 
 Redémarrer la stack:
@@ -1876,7 +1876,7 @@ docker compose up -d
 
 Fail2ban écoute les logs de connexion à votre server de messagerie, par défaut, dès qu'il rencontre une adresse IP qui tente de se connecter 3 fois sans succès en l'espace de 10 minutes, il bannit l'adresse, ce qui évite les attaques de type brute force.
 
-Vérifier que Fail@ban soit bien activé en allant dans votre fichier de configuration pour les variables d'environnement générale de Postfix/Dovecot/fail2ban etc.
+Vérifier que Fail2ban soit bien activé en allant dans votre fichier de configuration pour les variables d'environnement générale de Postfix/Dovecot/fail2ban etc.
 
 ```bash
 nano /path/to/my/env_file.env
@@ -1894,7 +1894,7 @@ Et celle-ci à "drop" ou "reject"
 FAIL2BAN_BLOCKTYPE=drop
 ```
 
-Vous pourrez ensuite voir toutes les adresses ip yankees/anglaises et allemande qui vous attaquent sans succès:
+Vous pourrez ensuite voir toutes les adresses ip yankees/anglaises et allemandes qui vous attaquent sans succès:
 
 ```bash
 docker exec $mailservercontainer setup fail2ban log
@@ -1911,15 +1911,15 @@ docker exec mailserver fail2ban-client status dovecot
 
 Connectez vous à votre service DNS
 
-Ajoutez ou modifiez un chant "mail.\_domainkey":
+Ajoutez ou modifiez un champ "mail._domainkey":
 
 Exemple:
 
 ```bash
-mail.\_domainkey 3600 IN TXT "v=DKIM1; k=rsa; p=AZERTYUIOPQSDFGHJKLMWXCVBN/AZERTYUIOPQSDFGHJKLMWXCVBN/AZERTYUIOPQSDFGHJKLMWXCVBN/AZERTYUIOPQSDFGHJKLMWXCVBN/AZERTYUIOPQSDFGHJKLMWXCVBN/AZERTYUIOPQSDFGHJKLMWXCVBN/AZERTYUIOPQSDFGHJKLMWXCVBN/AZERTYUIOPQSDFGHJKLMWXCVBN"
+mail._domainkey 3600 IN TXT "v=DKIM1; k=rsa; p=AZERTYUIOPQSDFGHJKLMWXCVBN/AZERTYUIOPQSDFGHJKLMWXCVBN/AZERTYUIOPQSDFGHJKLMWXCVBN/AZERTYUIOPQSDFGHJKLMWXCVBN/AZERTYUIOPQSDFGHJKLMWXCVBN/AZERTYUIOPQSDFGHJKLMWXCVBN/AZERTYUIOPQSDFGHJKLMWXCVBN/AZERTYUIOPQSDFGHJKLMWXCVBN"
 ```
 
-Ajouter ou modifier le chant "MX" (Mailboxe)
+Ajouter ou modifier le champ "MX" (Mailboxe)
 
 Exemple:
 
@@ -1927,7 +1927,7 @@ Exemple:
 @	MX	10800	10 mail.mondomain.truc.
 ```
 
-Ajouter ou modifiez le chant TXT pour autorisez vos MX à envoyer des méls de la part de mondomain.truc.
+Ajouter ou modifiez le champ TXT pour autorisez vos MX à envoyer des méls de la part de mondomain.truc.
 
 Exemple:
 
@@ -1935,7 +1935,7 @@ Exemple:
 @	TXT	3600	"v=spf1 mx -all" ou juste @	TXT	3600	"v=spf1 mx mail.mondomain.truc"
 ```
 
-Ajouter un chant TXT pour rediriger les méls entrants vers mail.monmomain.truc
+Ajouter un champ TXT pour rediriger les méls entrants vers mail.monmomain.truc
 
 Exemple:
 
@@ -1945,23 +1945,23 @@ mail	A	3600	x.x.x.x
 
 Ou x.x.x.x est votre adresse public.
 
-Ajouter ou modifier le chant "\_dmarc" (Le champ DMARC dans un DNS permet de définir une politique pour gérer les emails non conformes à SPF et DKIM, aidant à protéger un domaine contre le phishing et l'usurpation d'identité, il sert aussi à mettre en place une boîte de messagerie qui recevera les résultats des tests des servers Microtsof, Google, GMX et vous diront si votre serveur est bien paramétré).
+Ajouter ou modifier le champ "_dmarc" (Le champ DMARC dans un DNS permet de définir une politique pour gérer les emails non conformes à SPF et DKIM, aidant à protéger un domaine contre le phishing et l'usurpation d'identité, il sert aussi à mettre en place une boîte de messagerie qui recevera les résultats des tests des servers Microtsof, Google, GMX et vous diront si votre serveur est bien paramétré).
 
 ```bash
-\_dmarc	TXT	10800	"v=DMARC1; p=quarantine; sp=none; fo=0; adkim=r; aspf=r; pct=100; rf=afrf; ri=86400; rua=mailto:administrator@mondomain.truc; ruf=mailto:administrator@mondomain.truc"
+_dmarc	TXT	10800	"v=DMARC1; p=quarantine; sp=none; fo=0; adkim=r; aspf=r; pct=100; rf=afrf; ri=86400; rua=mailto:administrator@mondomain.truc; ruf=mailto:administrator@mondomain.truc"
 ```
 
 ## Dernières considérations:
 
 Beaucoup de servers de messagerie comme ceux de Google, Microtsof, gmx etc. Vérifient deux choses pour être sûr que les méls viennent bien d'un server correctement parmété:
 
-1- Qu'un chant inverse soit fonctionnel sur votre adresse publique. Il faut que lorsqu'on tape:
+1- Qu'un champ inverse soit fonctionnel sur votre adresse publique. Il faut que lorsqu'on tape:
 
 nslookup x.x.x.x
 
 L'output soit "mail.mondomain.truc" et non "freeboxsas1548487242.free.fr"
 
-Pour ça il faut aller dans les paramètres de votre abonnement Internet, exemple chez Free il faut se rendre sur "Ma Freebox" -> "Personnaliser mon reverse DNS", et mettre le chant de recherche inverse x.x.x.x => mail.mondomain.truc
+Pour ça il faut aller dans les paramètres de votre abonnement Internet, exemple chez Free il faut se rendre sur "Ma Freebox" -> "Personnaliser mon reverse DNS", et mettre le champ de recherche inverse x.x.x.x => mail.mondomain.truc
 
 2- La pluspart des FAI bloquent le traffic SMTP (méls sortants de chez vous), il faut donc désactiver ce bloquage:
 
