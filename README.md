@@ -610,6 +610,60 @@ Test de débit avec Speedtest en utilisant le matériel en question (et une boit
 
 Nous avons personnellement choisi **Ubuntu Server minimized**, majoritairement pour des questions d'habitude, mais bien sûr n'importequel Linux fera l'affaire.
 
+## Configuration d'une ip fixe
+
+Il est conseillé pour faciliter son utilisation d'attribuer une ip fixe à la machine NAS.
+
+Voici la marche à suivre pour un ubuntu 22
+
+Dans un premier temps il est nécessaire d'installer network-manager
+
+```
+sudo apt install network-manager
+```
+
+Dans un second temps vous devez déterminer l'identifiant de la carte réseau
+```
+ip a
+```
+
+![identifiant carte](images/ipa.webp)
+
+Modifier le fichier de configuration
+```
+cd /etc/netplan
+# On sauvegarde le fichier présent
+sudo cp 50-cloud-init.yaml 50-cloud-init.yaml.bak
+sudo nano 50-cloud-init.yaml
+```
+On renseigne le fichier de la façon suivante 
+
+```
+network:
+    version: 2
+    renderer: NetworkManager
+    ethernets:
+        eth0: # identifiant de la carte réseau 
+            addresses: [192.168.1.200/24] #ip souhaitée
+            routes:
+               - to: default
+                 via: 192.168.1.254 # ip boxe pour freebox révolution
+            nameservers:
+                addresses: [8.8.8.8, 8.8.4.4] # serveur dns google
+            dhcp4: false
+            dhcp6: false
+    version: 2
+```
+
+Redémarrage du service
+```
+# On applique les changements
+sudo netplan apply
+# On redémarre le service
+sudo systemctl restart systemd-networkd
+```
+
+
 ## LVM
 
 Par défaut, certains OS réservent une **part inférieure** à l'espace total disponible du disque pour la création du **système de fichier principal**, ceci pour plusieurs raisons (notamment de flexibilité, performance et sécurité). C'est pour cette raison que **LVM** est souvent utilisé par défaut.
