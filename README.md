@@ -610,59 +610,63 @@ Test de débit avec Speedtest en utilisant le matériel en question (et une boit
 
 Nous avons personnellement choisi **Ubuntu Server minimized**, majoritairement pour des questions d'habitude, mais bien sûr n'importequel Linux fera l'affaire.
 
-## Configuration d'une ip fixe
+## Configuration d'une IP fixe
 
-Il est conseillé pour faciliter son utilisation d'attribuer une ip fixe à la machine NAS.
+Il est conseillé pour faciliter son utilisation d'attribuer une IP fixe au serveur.
 
-Voici la marche à suivre pour un ubuntu 22
+Voici la marche à suivre pour un Ubuntu 22:
 
-Dans un premier temps il est nécessaire d'installer network-manager
+- Installer `network-manager`
 
-```
+```bash
 sudo apt install network-manager
 ```
 
-Dans un second temps vous devez déterminer l'identifiant de la carte réseau
-```
+- Déterminer l'identifiant de la carte réseau
+
+```bash
 ip a
 ```
 
 ![identifiant carte](images/ipa.webp)
 
-Modifier le fichier de configuration
-```
-cd /etc/netplan
-# On sauvegarde le fichier présent
-sudo cp 50-cloud-init.yaml 50-cloud-init.yaml.bak
-sudo nano 50-cloud-init.yaml
-```
-On renseigne le fichier de la façon suivante 
+- Modifier le fichier de configuration
 
+```bash
+# Sauvegarde du fichier actuel
+sudo cp /etc/netplan/50-cloud-init.yaml /etc/netplan/50-cloud-init.yaml.bak
+sudo nano /etc/netplan/50-cloud-init.yaml
 ```
+
+- On renseigne le fichier de la façon suivante
+
+**50-cloud-init.yaml**
+
+```yml
 network:
-    version: 2
-    renderer: NetworkManager
-    ethernets:
-        eth0: # identifiant de la carte réseau 
-            addresses: [192.168.1.200/24] #ip souhaitée
-            routes:
-               - to: default
-                 via: 192.168.1.254 # ip boxe pour freebox révolution
-            nameservers:
-                addresses: [8.8.8.8, 8.8.4.4] # serveur dns google
-            dhcp4: false
-            dhcp6: false
-    version: 2
+  version: 2
+  renderer: NetworkManager
+  ethernets:
+    eth0: # Identifiant de la carte réseau 
+      addresses: [192.168.1.200/24] # IP souhaitée
+      routes:
+        - to: default
+          via: 192.168.1.254 # IP du routeur Freebox Révolution
+      nameservers:
+        addresses: [8.8.8.8, 8.8.4.4] # Serveur DNS Google
+      dhcp4: false
+      dhcp6: false
+  version: 2
 ```
 
-Redémarrage du service
-```
+- Redémarrage du service
+
+```bash
 # On applique les changements
 sudo netplan apply
 # On redémarre le service
 sudo systemctl restart systemd-networkd
 ```
-
 
 ## LVM
 
