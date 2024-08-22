@@ -857,6 +857,8 @@ Plusieurs choses sont intéressantes à surveiller, exemples:
 - **Prometheus** pour la récupération des données
 - **Grafana** pour l'affichage
 
+Et des collecteurs ("exporters") sont là pour récupérer les données régulièrement et les envoyer à Prometheus.
+
 Voila un exemple de config:
 
 **compose.yml**
@@ -864,7 +866,7 @@ Voila un exemple de config:
 ```yml
 services:
 
-  node-exporter:
+  node-exporter: # Métriques principales
     container_name: node-exporter
     image: quay.io/prometheus/node-exporter:latest
     restart: unless-stopped
@@ -877,20 +879,25 @@ services:
       - /:/host:ro,rslave
     network_mode: host
 
-  smartctl-exporter:
+  zpool-exporter: # À utiliser en cas de ZFS (Raid-Z)
+    container_name: zpool-exporter
+    image: ghcr.io/jrcichra/zpool-status-prometheus-exporter
+    restart: unless-stopped
+    privileged: true
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+
+  smartctl-exporter: # Disques
     container_name: smartctl-exporter
     image: prometheuscommunity/smartctl-exporter
     restart: unless-stopped
     privileged: true
     user: root
-    ports:
-      - "9633:9633"
 
-  cadvisor:
+  cadvisor-exporter: # Services Docker
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
-    ports:
-    - 8080:8080
     volumes:
     - /:/rootfs:ro
     - /var/run:/var/run:rw
@@ -925,9 +932,10 @@ volumes:
 
 - `node-exporter` récupère les métriques classiques du système, il doit tourner directement sur le contexte de l'hôte pour avoir accès au matériel de manière non cloisonnée
 - `smartctl-exporter` récupère les métriques des disques
-- `cadvisor` collecte les données relatives à Docker
+- `cadvisor-exporter` collecte les données relatives à Docker
+- `zpool-exporter`: données concernant l'état du Raid-Z (Si applicable, sinon exclure le service de la stack)
 - `prometheus` rassemble les données et les met à disposition de Grafana
-- `grafana` vient lire les données sur Prometheus
+- `grafana` vient lire les données sur Prometheus, les présenter graphiquement et éventuellement notifier des alertes
 
 **prometheus.yml**
 
@@ -947,7 +955,11 @@ scrape_configs:
   - job_name: cadvisor
     static_configs:
     - targets:
-      - cadvisor:8080
+      - cadvisor-exporter:8080
+  - job_name: zpool
+    static_configs:
+    - targets:
+      - zpool-exporter:5000
 ```
 
 Comme `node-exporter` tourne sur l'hôte, on utilise ici l'IP de l'hôte 172.17.0.1 par défaut définie par Docker.  
@@ -956,7 +968,7 @@ On est censé [pouvoir y accéder par `host.docker.internal`](https://stackoverf
 Une fois les services lancés, vérifier sur le GUI de Prometheus (ici port 9090) que les agents (exporters) sont bien connectés dans l'onglet **Status/Target**.
 
 ![Prometheus](images/prometheus.png)
-Attention, le node-exporter peut dépasser le temps max de réponse pour prometheus (onglet **Status/Target** pour voir le temps de récupération des métriques "Last Scrape"). Dans ce cas il est possible de réduire le périmètre des métriques, exemple:
+Attention, le `node-exporter` peut dépasser le temps max de réponse pour prometheus (onglet **Status/Target** pour voir le temps de récupération des métriques "Last Scrape"). Dans ce cas il est possible de réduire le périmètre des métriques, exemple:
 
 **compose.yml**
 
@@ -983,6 +995,8 @@ Attention, le node-exporter peut dépasser le temps max de réponse pour prometh
 #...
 ```
 
+_La liste des collecteurs visible sur le [répo de `node_exporter`](https://github.com/prometheus/node_exporter?tab=readme-ov-file#collectors)_
+
 Il est aussi possible d'augmenter le délai d'expiration
 
 **prometheus.yml**
@@ -994,8 +1008,6 @@ Il est aussi possible d'augmenter le délai d'expiration
     scrape_timeout: 20s
 #...
 ```
-
-⚠️ Cadvisor demande exclusivement à être attaqué en utilisant le port 8080 sinon Prometheus se voit refuser la connexion, ce port étant déjà occupé par la console Traefik, il faut donc rediriger le port 8080 du conteneur Traefik vers par exemple le 8085 du host.
 
 ![Grafana](images/grafana.png)
 
