@@ -604,7 +604,7 @@ Le Mikrotik CRS305 possède 4 ports SFP+ et 1 PoE
 
 Test de débit avec Speedtest en utilisant le matériel en question (et une boite Freebox Delta)
 
-![Speedtest](images/speedtest.jpg)
+![Speedtest](images/speedtest.PNG)
 
 # Système d'exploitation
 
@@ -1940,7 +1940,7 @@ _Une clé DKIM (DomainKeys Identified Mail) permet de signer numériquement les 
 docker exec $containername setup config dkim
 ```
 
-Des clefs [DKIM](https://docker-mailserver.github.io/docker-mailserver/v11.0/config/best-practices/dkim/) publiques et privée seront créés ici:
+Des clefs [DKIM](https://docker-mailserver.github.io/docker-mailserver/v11.0/config/best-practices/dkim/) sont créés, une publique et une privée:
 
 ```bash
 ${MAIL_CONFIG}/opendkim/keys/mondomaine.truc/
@@ -1978,7 +1978,7 @@ Et celle-ci à "drop" ou "reject"
 FAIL2BAN_BLOCKTYPE=drop
 ```
 
-Il est alors possible de voir toutes les adresses ip yankees/anglaises et allemandes qui attaquent sans succès:
+Il est alors possible de voir toutes les adresses ip us/anglaises et allemandes qui attaquent sans succès:
 
 ```bash
 docker exec $mailservercontainer setup fail2ban log
@@ -2002,7 +2002,7 @@ Exemple:
 mail._domainkey 3600 IN TXT "v=DKIM1; k=rsa; p=AZERTYUIOPQSDFGHJKLMWXCVBN/AZERTYUIOPQSDFGHJKLMWXCVBN/AZERTYUIOPQSDFGHJKLMWXCVBN/AZERTYUIOPQSDFGHJKLMWXCVBN/AZERTYUIOPQSDFGHJKLMWXCVBN/AZERTYUIOPQSDFGHJKLMWXCVBN/AZERTYUIOPQSDFGHJKLMWXCVBN/AZERTYUIOPQSDFGHJKLMWXCVBN"
 ```
 
-- Ajouter ou modifier le champ "MX" (Mailboxe)
+- Ajouter ou modifier le champ "MX" (Mailboxes)
 
 Exemple:
 
@@ -2038,7 +2038,7 @@ _Le champ DMARC dans un DNS permet de définir une politique pour gérer les ema
 
 ## Dernières considérations:
 
-Beaucoup de serveurs de messagerie comme ceux de Google, Microtsof, gmx etc. vérifient deux choses pour être sûr que les mails viennent d'un serveur correctement paramété:
+Beaucoup de serveurs de messagerie comme ceux de Google, Microtsof, gmx etc. vérifient plusieurs choses pour être sûr que les mails viennent d'un serveur correctement paramétré:
 
 1. Qu'un champ inverse soit fonctionnel sur votre adresse publique. Il faut que lorsqu'on tape:
 
