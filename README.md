@@ -552,7 +552,7 @@ Sensor 8:     +34.9°C  (low  = -273.1°C, high = +65261.8°C)
 
 # Ventilation
 
-Faire entrer l'air par l'avant sur les disques et le faire sortir à l'arrière et/ou vers le haut
+En général, il est conseillé de faire entrer l'air par l'avant sur les disques et de le faire sortir à l'arrière et/ou vers le haut
 
 ![Flux d'air](images/ventilation.png)
 
@@ -560,11 +560,11 @@ Attention à l'orientation des ventilos, on peut la voir en général en relief
 
 ![Orientation](images/fan-direction.png)
 
-Pour ventiler le HBA il est possible d'utiliser ce type d'adaptateur qui se fixe sur un slot du boitier (au niveau des PCI):
+Pour ventiler le HBA, il est possible d'utiliser ce type d'adaptateur qui se fixe sur un slot du boitier (au niveau des PCI):
 
 ![Adaptateur pour ventiler le HBA](images/adapter-fan-slot.png)
 
-Avec cet adaptateur, il est possible de chainer 2 ventilateurs côte à côte.
+Avec cet adaptateur, il est possible de chainer deux ventilateurs côte à côte.
 
 ## PWM
 
@@ -574,9 +574,9 @@ Mais je n'ai pas réussi à récupérer quoique ce soit avec la carte mère **B4
 
 # Réseau
 
-Le **SAS 3** permet un débit théorique de 1Go/s. En pratique j'ai pu atteindre **500Mo/s** en écriture sur un SSD SAS 3 (simple rsync d'un gros fichier et sans raid).
+Le **SAS 3** permet un débit théorique de 1Go/s. En pratique, j'ai pu atteindre **500Mo/s** en écriture sur un SSD SAS 3 (simple rsync d'un gros fichier et sans raid).
 
-Avec la bonne boite internet (exemple Freebox Delta), il suffit donc d'avoir une **carte réseau 10Gb** avec le bon câble pour permettre une vitesse de téléchargement élevée.
+Avec la bonne boite internet (exemple Delta ou Ultra de chez Free), il suffit donc d'avoir une **carte réseau 10Gb** avec le bon câble pour permettre une vitesse de téléchargement élevée.
 
 ## Interface
 
@@ -584,27 +584,27 @@ En termes d'interface, il existe des **cartes SFP+** à 35€ sur Aliexpress (ex
 
 ![Carte SFP+](images/interface-sfp+.webp)
 
-Attention ces interfaces grand publique **ne gèrent pas le WOL**, j'ai personnellement laissé l'ethernet 1Gb intégré à la carte mère branché pour garder cette fonctionnalité.
+Attention ces interfaces grand public **ne gèrent pas le WOL**, j'ai personnellement laissé l'ethernet 1Gb intégré à la carte mère branché pour garder cette fonctionnalité.
 
 ## Câbles
 
-Si la machine n'est pas trop éloignée du routeur (pas plus de **10m**) l'idéal est d'utiliser un **câble DAC**. Il a l'avantage de moins faire consommer et moins chauffer les interfaces. Sinon il faut passer sur de la fibre qui requiert des modules de chaque coté pour convertir le signal électrique en lumière et inversement.
+Si la machine n'est pas trop éloignée du routeur (pas plus de **10m**) l'idéal est d'utiliser un **câble DAC**. Il a l'avantage de moins faire consommer et moins chauffer les interfaces. Sinon il faut passer sur de la fibre qui requiert des modules de chaque côté pour convertir le signal électrique en lumière et inversement.
 
-Ici un DAC sur Aliexpress (3m -> **13€**)
+Ici un DAC sur Aliexpress (3m → **13€**)
 
 ![DAC](images/dac.webp)
 
 ## Souiche
 
-Si besoin de brancher plusieurs appareils en SFP+, le switch **Mikrotik CRS305** est un bon compromi et coute environ 140€ sur Amazon
+Si besoin de brancher plusieurs appareils en SFP+, le switch **Mikrotik CRS305** est un bon compromi et coute environ 140€ sur Amazon.
 
 ![Mikrotik CRS305](images/mikrotik.jpg)
 
 Le Mikrotik CRS305 possède 4 ports SFP+ et 1 PoE
 
-Test de débit avec Speedtest en utilisant le matériel en question (et une boite Freebox Delta)
+Test de débit avec Speedtest en utilisant le matériel en question (et une boite Delta de chez Free)
 
-![Speedtest](images/speedtest.PNG)
+![Speedtest](images/speedtest.png)
 
 # Système d'exploitation
 
@@ -612,9 +612,9 @@ Nous avons personnellement choisi **Ubuntu Server minimized**, majoritairement p
 
 ## Configuration d'une IP fixe
 
-Il est conseillé pour faciliter son utilisation d'attribuer une IP fixe au serveur.
-
-Voici la marche à suivre pour un Ubuntu 22:
+Il est conseillé pour faciliter l'utilisation du serveur de lui attribuer une IP fixe.  
+Pour ce faire, le plus simple est de configurer un bail DHCP sur le routeur.
+Mais il est aussi possible de la fixer sur le serveur, voici la marche à suivre sur Ubuntu 22 :
 
 - Installer `network-manager`
 
@@ -656,7 +656,6 @@ network:
         addresses: [8.8.8.8, 8.8.4.4] # Serveur DNS Google
       dhcp4: false
       dhcp6: false
-  version: 2
 ```
 
 - Redémarrage du service
@@ -670,7 +669,7 @@ sudo systemctl restart systemd-networkd
 
 ## LVM
 
-Par défaut, certains OS réservent une **part inférieure** à l'espace total disponible du disque pour la création du **système de fichier principal**, ceci pour plusieurs raisons (notamment de flexibilité, performance et sécurité). C'est pour cette raison que **LVM** est souvent utilisé par défaut.
+Par défaut, certains OS réservent une **part inférieure** à l'espace total disponible du disque pour la création du **système de fichier principal**; ceci pour plusieurs raisons (notamment de flexibilité, performance et sécurité). C'est pour cette raison que **LVM** est souvent utilisé par défaut.
 
 En cas de **saturation** d'un volume LVM utilisé pour le système de fichier de l'OS:
 
@@ -714,16 +713,16 @@ Nous venons d'**ajouter 100Go** au volume avec l'option `-L` et d'**étendre le 
 
 ## Gestion des services
 
-Les services mentionnés ci-après utilisent tous **Docker** avec son extention **Compose**.
+Les services mentionnés [dans le chapitre suivant](#services) utilisent tous **Docker** avec son extention **Compose**.
 
-Il est conseillé d'installer Docker en suivant la [documentation officielle](https://docs.docker.com/engine/install/ubuntu/) pour éviter de se retrouver avec un ancienne version ou une modifiée.  
+Il est conseillé d'installer Docker en suivant la [documentation officielle](https://docs.docker.com/engine/install/ubuntu/) pour éviter de se retrouver avec une ancienne version ou modifiée par le mainteneur du gestionnaire de dépendances.  
 Pour en simplifier l'utilisation, ne pas oublier de s'ajouter au groupe `docker` après l'installation:
 
 ```bash
 sudo usermod -aG docker $USER
 ```
 
-Nous proposons ici une manière simple des les installer et de les gérer, sans aller jusqu'à utiliser des outils comme Kubernetes qui seraient sans doute surdimentionnés pour une utilisation privée:
+Nous proposons ici une manière simple d'installer et de gérer les services, sans aller jusqu'à utiliser des outils comme Kubernetes qui seraient sans doute surdimentionnés pour une utilisation privée:
 
 - Créer un répertoire pour chaque service depuis le `home` de l'utilisateur principal (pour y avoir accès facilement à la connexion SSH)
 
@@ -850,6 +849,8 @@ Plusieurs choses sont intéressantes à surveiller, exemples:
   - CPU
 - L'état des raids
 - Les débits réseau entrant et sortant
+- L'espace disque restant pour l'OS et les données
+- La consommation de la mémoire
 
 ### Prometheus & Grafana
 
@@ -962,7 +963,7 @@ scrape_configs:
       - zpool-exporter:5000
 ```
 
-Comme `node-exporter` tourne sur l'hôte, on utilise ici l'IP de l'hôte 172.17.0.1 par défaut définie par Docker.  
+Comme `node-exporter` tourne sur l'hôte, on utilise ici l'IP de l'hôte `172.17.0.1` par défaut définie par Docker.  
 On est censé [pouvoir y accéder par `host.docker.internal`](https://stackoverflow.com/a/24326540/305189) mais ça n'a pas fonctionné chez moi.
 
 Une fois les services lancés, vérifier sur le GUI de Prometheus (ici port 9090) que les agents (exporters) sont bien connectés dans l'onglet **Status/Target**.
@@ -995,7 +996,7 @@ Attention, le `node-exporter` peut dépasser le temps max de réponse pour prome
 #...
 ```
 
-_La liste des collecteurs visible sur le [répo de `node_exporter`](https://github.com/prometheus/node_exporter?tab=readme-ov-file#collectors)_
+_La liste des collecteurs est visible sur le [répo de `node_exporter`](https://github.com/prometheus/node_exporter?tab=readme-ov-file#collectors)_
 
 Il est aussi possible d'augmenter le délai d'expiration
 
@@ -1013,7 +1014,7 @@ Il est aussi possible d'augmenter le délai d'expiration
 
 ## Samba/CIFS
 
-Voila une manière simple de créer une instance Samba avec Docker
+Voilà une manière simple de créer une instance Samba avec Docker
 
 **compose.yml**
 
@@ -1024,7 +1025,7 @@ services:
     container_name: samba
     restart: unless-stopped
     environment:
-      ACCOUNT_glide: <hash-user>
+      ACCOUNT_me: <hash-user>
       SAMBA_VOLUME_CONFIG_vol1: |
         [vol1]
           path = /volume1
@@ -1036,7 +1037,7 @@ services:
       - 445:445
 ```
 
-Replacer les occurrences de `glide` et `volume1` respectivement par l'utilisateur et le partage voulus.
+Replacer les occurrences de `me` et `volume1` respectivement par l'utilisateur et le partage voulus.
 
 Générer le `<hash-user>` avec la commande suivante:
 
@@ -1048,10 +1049,10 @@ Plus d'information sur le [Github](https://github.com/ServerContainers/samba)
 
 ## Photos
 
-[Immich](https://github.com/immich-app/immich) est un système de gestion de photos moderne et populaire, il permet (parmis [tant d'autres fonctionnalités](https://github.com/immich-app/immich?tab=readme-ov-file#features)) de:
+[Immich](https://github.com/immich-app/immich) est un système de gestion de photos moderne et populaire, il permet (parmi [tant d'autres fonctionnalités](https://github.com/immich-app/immich?tab=readme-ov-file#features)) de:
 - Parcourir les photos par chronologie (à la Google photo) ou par album
 - Créer des albums et les partager
-- Automatiser la sauveguarde des photos des téléphones
+- Automatiser la sauvegarde des photos des téléphones
 - Reconnaitre les visages, formes, objets, couleur et attacher des metadonnées en conséquence
 
 **compose.yml**
@@ -1157,6 +1158,18 @@ DB_PASSWORD=<pass>
 DB_USERNAME=postgres
 DB_DATABASE_NAME=<user>
 ```
+
+Pour ajouter une librairie de fichiers existants:
+
+- Monter le répertoire de photos dans le service `immich-server`
+- Se rendre dans l'**Administration**
+- Puis dans **Bibliothèques externes**
+- **Créer une bibliothèque**
+- Dans le menu contextuel de la bibliothèque **Modifier les chemins d'importation**
+- **Ajouter un chemin**
+- Et enfin **Analyser les nouveaux fichiers**
+
+Ces derniers devraient commencer à apparaitre dans la page d'accueil. Il est possible de consulter la progression de l'importation dans les **Tâches** de l'**Administration**
 
 ![Immich](images/immich.png)
 
