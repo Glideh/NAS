@@ -604,7 +604,7 @@ Le Mikrotik CRS305 possède 4 ports SFP+ et 1 PoE
 
 Test de débit avec Speedtest en utilisant le matériel en question (et une boite Delta de chez Free)
 
-![Speedtest](images/speedtest.png)
+![Speedtest](images/speedtest.PNG)
 
 # Système d'exploitation
 
