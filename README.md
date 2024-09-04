@@ -843,14 +843,14 @@ ou depuis le répertoire du service
 
 Plusieurs choses sont intéressantes à surveiller, exemples:
 
-- Les températures
+- Les **températures**
   - Disques
   - HBA
   - CPU
-- L'état des raids
-- Les débits réseau entrant et sortant
-- L'espace disque restant pour l'OS et les données
-- La consommation de la mémoire
+- L'état des **raids**
+- Les **débits réseau** entrant et sortant
+- L'**espace disque** restant pour l'OS et les données
+- La consommation de la **mémoire**
 
 ### Prometheus & Grafana
 
@@ -858,7 +858,7 @@ Plusieurs choses sont intéressantes à surveiller, exemples:
 - **Prometheus** pour la récupération des données
 - **Grafana** pour l'affichage
 
-Et des collecteurs ("exporters") sont là pour récupérer les données régulièrement et les envoyer à Prometheus.
+Et des collecteurs ("exporters") sont là pour **récupérer les données** régulièrement et les envoyer à Prometheus.
 
 Voila un exemple de config:
 
@@ -931,12 +931,12 @@ volumes:
     grafana-data:
 ```
 
-- `node-exporter` récupère les métriques classiques du système, il doit tourner directement sur le contexte de l'hôte pour avoir accès au matériel de manière non cloisonnée
-- `smartctl-exporter` récupère les métriques des disques
-- `cadvisor-exporter` collecte les données relatives à Docker
-- `zpool-exporter`: données concernant l'état du Raid-Z (Si applicable, sinon exclure le service de la stack)
-- `prometheus` rassemble les données et les met à disposition de Grafana
-- `grafana` vient lire les données sur Prometheus, les présenter graphiquement et éventuellement notifier des alertes
+- `node-exporter` récupère les **métriques classiques du système**, il doit tourner directement sur le contexte de l'hôte pour avoir accès au matériel de manière non cloisonnée
+- `smartctl-exporter` récupère les métriques des **disques**
+- `cadvisor-exporter` collecte les données relatives à **Docker**
+- `zpool-exporter`: données concernant l'état du **Raid-Z** (Si applicable, sinon exclure le service de la stack)
+- `prometheus` **rassemble les données** et les met à disposition de Grafana
+- `grafana` vient **lire les données** sur Prometheus, les **présenter graphiquement** et éventuellement **notifier des alertes**
 
 **prometheus.yml**
 
@@ -1029,7 +1029,7 @@ services:
       SAMBA_VOLUME_CONFIG_vol1: |
         [vol1]
           path = /volume1
-          valid users = glide
+          valid users = me
           read only = no
     volumes:
       - /volume1:/volume1
@@ -1466,7 +1466,7 @@ mkdir -p sftp/backup/<utilisateur>
 echo "<utilisateur>::<uid>:<gid>:<repertoire>" >> sftp/users.conf
 
 # Exemple
-echo "glide::1000:1000:cible" >> sftp/users.conf
+echo "me::1000:1000:cible" >> sftp/users.conf
 ```
 
 - Créer les clés
@@ -1499,7 +1499,7 @@ services:
       - ./backrest/config:/config
       - ./backrest/cache:/cache
       - ./backrest/source:/source:ro # Données à sauvegarder
-      - ./backrest/ssh:/root/.ssh # Config & clés SSD
+      - ./backrest/ssh:/root/.ssh # Config & clés SSH
     environment:
       - BACKREST_DATA=/data
       - BACKREST_CONFIG=/config/config.json
@@ -1526,6 +1526,8 @@ ssh-keygen -f ./backrest/ssh/id_rsa
 ```
 ssh-keyscan -H -p <port-sftp> <domaine> > ./backrest/ssh/known_hosts
 ```
+
+_Remplacer `<domaine>` et `<port-sftp>` par l'hôte et le port sur lequels les données seront sauvegardées_
 
 - Créer la config SSH dans `backrest/ssh/config`
 
