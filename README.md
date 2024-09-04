@@ -1139,6 +1139,27 @@ services:
     profiles:
       - donotstart
 
+  backup:
+    container_name: immich_db_dumper
+    image: prodrigestivill/postgres-backup-local:14
+    restart: unless-stopped
+    environment:
+      POSTGRES_HOST: database
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_DB: ${DB_DATABASE_NAME}
+      POSTGRES_CLUSTER: 'TRUE'
+      POSTGRES_EXTRA_OPTS: '--clean --if-exists'
+      BACKUP_DIR: /backups
+      SCHEDULE: "@daily"
+      BACKUP_KEEP_DAYS: 1
+      BACKUP_KEEP_WEEKS: 1
+      BACKUP_KEEP_MONTHS: 1
+    volumes:
+      - ${DB_BACKUP_LOCATION}:/backups
+    depends_on:
+      - database
+
 volumes:
   model-cache:
 ```
