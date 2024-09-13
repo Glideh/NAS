@@ -2120,6 +2120,7 @@ Créer une nouvelle instance
 ```
 
 La doc officielle ici => https://docs.cozy.io/en/tutorials/selfhosting/docker/
+Repo Officiel pour Docker => https://github.com/cozy/cozy-stack-compose
 
 
 # Mailserver
