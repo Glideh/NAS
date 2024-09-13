@@ -1886,6 +1886,242 @@ http:
         regex: "https://(.*)/.well-known/(card|cal)dav"
         replacement: "https://${1}/remote.php/dav/"
 ```
+
+# CozyClaude
+
+Cozy cloud peut s'apparenter à un coffre fort numérique proposant différents connecteurs et différentes apps. C'est un projet FRANCAIS développé en go. On peut désormais faire tourner ce service sur docker.
+
+Créer un répertoire files dans le répertoire du composer.yml projet contenant le fichier suivant :
+
+cozy.yml
+
+```
+# cozy.yaml for production Docker
+
+host: 0.0.0.0
+port: 8080
+
+admin:
+  host: 0.0.0.0
+  port: 6060
+
+subdomains: {{.Env.COZY_SUBDOMAIN_TYPE}}
+
+couchdb:
+  url: {{.Env.COUCHDB_PROTOCOL}}://{{.Env.COUCHDB_USER}}:{{.Env.COUCHDB_PASSWORD}}@{{.Env.COUCHDB_HOST}}:{{.Env.COUCHDB_PORT}}
+
+fs:
+  url: file:///var/lib/cozy/data
+
+vault:
+  credentials_encryptor_key: /etc/cozy/vault.enc
+  credentials_decryptor_key: /etc/cozy/vault.dec
+
+konnectors:
+  cmd: /usr/local/bin/konnector-node-run.sh
+
+log:
+  level: info
+  syslog: false
+
+registries:
+  default:
+    - https://apps-registry.cozycloud.cc/selfhosted
+    - https://apps-registry.cozycloud.cc/mespapiers
+    - https://apps-registry.cozycloud.cc/banks
+    - https://apps-registry.cozycloud.cc/
+
+mail:
+  noreply_address: noreply@{{.Env.DOMAIN}}
+  noreply_name: My Cozy
+  host: {{.Env.MAIL_HOST}}
+  port: {{.Env.MAIL_PORT}}
+  username: {{.Env.MAIL_USERNAME}}
+  password: {{.Env.MAIL_PASSWORD}}
+  disable_tls: {{.Env.MAIL_DISABLE_TLS}}
+  use_ssl: {{.Env.MAIL_USE_SSL}}
+  skip_certificate_validation: {{.Env.MAIL_SKIP_CERTIFICATE_VALIDATION}}
+  local_name: {{.Env.MAIL_LOCAL_NAME}}
+
+```
+
+Dans le répertoire projet, créer le fichier compose.yml
+
+```
+version: "3.8"
+name: cozy
+
+services:
+  # Database
+  couchdb:
+    image: couchdb:3.3
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - /path/vers/mon/volume/couchdb/data:/opt/couchdb/data
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "${COUCHDB_PROTOCOL}://${COUCHDB_USER}:${COUCHDB_PASSWORD}@${COUCHDB_HOST}:${COUCHDB_PORT}/_up",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # Cozy Stack
+  stack:
+    image: cozy/cozy-stack
+    pull_policy: always
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      - couchdb
+    healthcheck:
+      test: '[ "$(curl -fsSL http://localhost:8080/status | jq -r .status)" = "OK" ]'
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    volumes:
+      - /path/vers/mon/volume/cozy-stack/data:/var/lib/cozy/data
+      - /path/vers/mon/volume/cozy-stack/config:/etc/cozy/
+      - ./files/cozy.yml:/etc/cozy/cozy.yml
+
+networks:
+  default:
+    name: traefik # Nom du réseau que vous avez créez si vous utilisez Traefik
+    external: true
+
+```
+
+Création du fichier cozy-stack.sh 
+
+```
+#!/bin/bash
+
+docker compose exec stack cozy-stack "$@"
+
+```
+
+Création du fichier .env
+
+```
+##############################################
+#                                            #
+#     Sample Env file for docker-compose     #
+#                                            #
+##############################################
+
+## Global configuration
+#######################
+
+# The base domain for all your instances
+DOMAIN=domain.example
+
+## Reverse proxy
+################
+
+# The email address used to generate let's Encrypt certificates on-the-fly
+ACME_EMAIL=your.email@domain.example
+
+# CouchDB
+##########
+
+COUCHDB_PROTOCOL=http
+COUCHDB_HOST=couchdb
+COUCHDB_PORT=5984
+COUCHDB_USER=cozy
+COUCHDB_PASSWORD=SomeRandomlyGeneratedPassword
+
+# Stack
+#######
+
+# Admin passphrase for all administrative commands
+# Should be set on first container launch to define the password
+# If undefined on first start, a random password will be chosen and shown in logs
+# You can remove this line and restart container if you want cozy-stack to
+# ask for admin password on each command line call
+COZY_ADMIN_PASSPHRASE=AnotherRandomlyGeneratedPassword
+
+# Application subdomain type for each cozy.
+# could be nested (https://<app>.<instance>.<domain>)
+# or flat (https://<instance>-<app>.<domain>)
+COZY_SUBDOMAIN_TYPE=flat
+
+# Mail
+START_EMBEDDED_POSTFIX=true
+MAIL_HOST=localhost
+MAIL_PORT=25
+MAIL_USERNAME=""
+MAIL_PASSWORD=""
+MAIL_DISABLE_TLS=true
+MAIL_USE_SSL=false
+MAIL_SKIP_CERTIFICATE_VALIDATION=false
+MAIL_LOCAL_NAME=localhost
+```
+Ensuite il s'agit de configurer le router Traefik
+
+```
+http:
+  routers:
+    cozy:
+      service: cozy
+      rule: "HostRegexp(`(.+\\.)?monsousdomaine\\.mondomaine\\.fr`)"
+      entrypoints: websecure
+      tls:
+        certResolver: my
+        domains:
+          - main: "monsousdomaine.mondomaine.fr"
+            sans:
+              - "home.monsousdomaine.mondomaine.fr"
+              - "banks..monsousdomaine.mondomaine.fr"
+              - "contacts.monsousdomaine.mondomaine.fr"
+              - "drive.monsousdomaine.mondomaine.fr"
+              - "notes.monsousdomaine.mondomaine.fr"
+              - "passwords.monsousdomaine.mondomaine.fr"
+              - "photos.monsousdomaine.mondomaine.fr"
+              - "settings.monsousdomaine.mondomaine.fr"
+              - "store.monsousdomaine.mondomaine.fr"
+              - "mespapiers.monsousdomaine.mondomaine.fr"
+  services:
+    cozy:
+      loadBalancer:
+        servers:
+          - url: "http://stack:8080"
+
+```
+
+La liste des domains -> sans permettent à traefik de créer un certificat pour chaque apps de cozy cloud
+
+Lancer le container
+
+```
+docker compose up -d
+```
+
+Vérifier le statut de cozy
+```
+./cozy-stack.sh status
+```
+
+Créer une nouvelle instance
+```
+./cozy-stack.sh instances add \
+    --apps home,banks,contacts,drive,notes,passwords,photos,settings,store \
+    --email "your.email@domain.example" \
+    --locale fr \
+    --tz "Europe/Paris" \
+    --passphrase YourStrongP@ssw0rd \
+    monsousdomaine.mondomaine.fr
+```
+
+La doc officielle ici => https://docs.cozy.io/en/tutorials/selfhosting/docker/
+
+
 # Mailserver
 
 ⚠️ Pour les gens vraiment deter qui n'ont pas peur des (très) vieilles technos.
