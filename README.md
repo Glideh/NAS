@@ -1771,6 +1771,8 @@ services:
 
 ## Nextclaude
 
+Nextcloud est un outil d'hébergement de fichiers et une plateforme de collaboration apportant un grand nombre de fonctionnalités sous forme d'extensions.
+
 Trois conteneurs:
 
 1. Redis pour le cache
@@ -1837,7 +1839,7 @@ Pour le Nextcloud et la DB il faudra déclarer quelques variables dans le `.env`
 
 **.env**
 
-```bash
+```.env
 MYSQL_ROOT_PASSWORD: prout95
 MYSQL_PASSWORD: chouchouette
 MYSQL_DATABASE_NC: nextcloud
@@ -1889,7 +1891,7 @@ http:
 
 ## CozyClaude
 
-Cozy cloud peut s'apparenter à un coffre fort numérique proposant différents connecteurs et différentes apps. C'est un projet FRANCAIS développé en go. On peut désormais faire tourner ce service sur Docker.
+Cozy Cloud peut s'apparenter à un coffre fort numérique proposant différents connecteurs et différentes apps. C'est un projet FRANCAIS développé en Go. On peut désormais faire tourner ce service sur Docker.
 
 - Créer un répertoire `files` dans le répertoire du projet contenant le fichier suivant :
 
