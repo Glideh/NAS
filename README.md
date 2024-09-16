@@ -25,7 +25,7 @@ Nous avons essayé de trouver un bon compromis budget (~**500€**) / performanc
 | **Carte réseau 10Gb**  | [Aliex Intel X520](https://fr.aliexpress.com/item/1005005503868174.html)                            |   35€ |  |
 | **Câble DAC**  | [Aliex 3 mètres](https://fr.aliexpress.com/item/1005006118860005.html)                            |   13€ |  |
 
-La consommation électrique constatée avec le matériel ci-dessus (4 ventilateurs 12") est de
+La consommation électrique mesurée avec le matériel ci-dessus (4 ventilateurs 12") est de
 - **50W** sans disque
 - **80W** avec **8 SSD** (~160€ par an)
 - **115W** avec **8 HDD** (~230€ par an)
@@ -1887,15 +1887,15 @@ http:
         replacement: "https://${1}/remote.php/dav/"
 ```
 
-# CozyClaude
+## CozyClaude
 
-Cozy cloud peut s'apparenter à un coffre fort numérique proposant différents connecteurs et différentes apps. C'est un projet FRANCAIS développé en go. On peut désormais faire tourner ce service sur docker.
+Cozy cloud peut s'apparenter à un coffre fort numérique proposant différents connecteurs et différentes apps. C'est un projet FRANCAIS développé en go. On peut désormais faire tourner ce service sur Docker.
 
-Créer un répertoire files dans le répertoire du composer.yml projet contenant le fichier suivant :
+- Créer un répertoire `files` dans le répertoire du projet contenant le fichier suivant :
 
-cozy.yml
+**cozy.yml**
 
-```
+```yml
 # cozy.yaml for production Docker
 
 host: 0.0.0.0
@@ -1942,13 +1942,11 @@ mail:
   use_ssl: {{.Env.MAIL_USE_SSL}}
   skip_certificate_validation: {{.Env.MAIL_SKIP_CERTIFICATE_VALIDATION}}
   local_name: {{.Env.MAIL_LOCAL_NAME}}
-
 ```
 
-Dans le répertoire projet, créer le fichier compose.yml
+- Créer le **compose.yml**
 
-```
-version: "3.8"
+```yml
 name: cozy
 
 services:
@@ -1993,23 +1991,21 @@ services:
 
 networks:
   default:
-    name: traefik # Nom du réseau que vous avez créez si vous utilisez Traefik
+    name: traefik # Nom du réseau Traefik si utilisé
     external: true
-
 ```
 
-Création du fichier cozy-stack.sh 
+- Création du fichier `cozy-stack.sh`
 
-```
+```sh
 #!/bin/bash
 
 docker compose exec stack cozy-stack "$@"
-
 ```
 
-Création du fichier .env
+- Création du fichier `.env`
 
-```
+```conf
 ##############################################
 #                                            #
 #     Sample Env file for docker-compose     #
@@ -2063,9 +2059,10 @@ MAIL_USE_SSL=false
 MAIL_SKIP_CERTIFICATE_VALIDATION=false
 MAIL_LOCAL_NAME=localhost
 ```
-Ensuite il s'agit de configurer le router Traefik
 
-```
+- Configurer le router Traefik si applicable
+
+```yml
 http:
   routers:
     cozy:
@@ -2095,20 +2092,22 @@ http:
 
 ```
 
-La liste des domains -> sans permettent à traefik de créer un certificat pour chaque apps de cozy cloud
+La liste des domains -> sans permettent à traefik de créer un certificat pour chaque apps de Cozy Cloud
 
-Lancer le container
+- Lancer le container
 
 ```
 docker compose up -d
 ```
 
-Vérifier le statut de cozy
+- Vérifier le statut de cozy
+
 ```
 ./cozy-stack.sh status
 ```
 
-Créer une nouvelle instance
+- Créer une nouvelle instance
+
 ```
 ./cozy-stack.sh instances add \
     --apps home,banks,contacts,drive,notes,passwords,photos,settings,store \
@@ -2122,8 +2121,7 @@ Créer une nouvelle instance
 La doc officielle ici => https://docs.cozy.io/en/tutorials/selfhosting/docker/
 Repo Officiel pour Docker => https://github.com/cozy/cozy-stack-compose
 
-
-# Mailserver
+## Mailserver
 
 ⚠️ Pour les gens vraiment deter qui n'ont pas peur des (très) vieilles technos.
 
@@ -2197,15 +2195,15 @@ ROUNDCUBE_CONFIG=/path/to/mailserver/roundcube/www:/var/www/html
 ROUNDCUBE_DB=/path/to/mailserver/roundcube/db/sqlite:/var/roundcube/db
 ```  
 
-Lancer la stack une première fois et créer un utilisateur:
+- Lancer la stack une première fois et créer un utilisateur
 
 ```bash
 docker exec $containername setup email add name@mondomaine.truc $password
 ```
 
-## DKIM:
+### DKIM
 
-Créer la clef DKIM
+- Créer la clef DKIM
 
 _Une clé DKIM (DomainKeys Identified Mail) permet de signer numériquement les emails envoyés par un serveur de messagerie, prouvant ainsi que le message n'a pas été altéré et qu'il provient bien du domaine indiqué. Cela aide à lutter contre le spam et l'usurpation d'identité_
 
@@ -2219,7 +2217,7 @@ Des clefs [DKIM](https://docker-mailserver.github.io/docker-mailserver/v11.0/con
 ${MAIL_CONFIG}/opendkim/keys/mondomaine.truc/
 ```
 
-Redémarrer la stack:
+- Redémarrer la stack:
 
 ```bash
 docker compose down
@@ -2229,42 +2227,42 @@ docker compose down
 docker compose up -d
 ```
 
-## Fail2ban:
+### Fail2ban
 
 Fail2ban écoute les journaux de connexion au server. Pour la messagerie par défaut, dès qu'il rencontre une adresse IP qui tente de se connecter 3 fois sans succès en l'espace de 10 minutes, il bannit l'adresse, ce qui évite les attaques de type brute force.
 
-Vérifier que Fail2ban soit bien activé en allant dans le fichier de configuration pour les variables d'environnement générale de Postfix/Dovecot/fail2ban etc.
+- Vérifier que Fail2ban soit bien activé en allant dans le fichier de configuration pour les variables d'environnement générale de Postfix/Dovecot/fail2ban etc.
 
 ```bash
 nano /chemin/vers/le/fichier_env.env
 ```
 
-Et vérifier que la ligne suivant soit bien à "1"
+- Et vérifier que la ligne suivant soit bien à "1"
 
 ```bash
 ENABLE_FAIL2BAN=1
 ```
 
-Et celle-ci à "drop" ou "reject"
+- Et celle-ci à "drop" ou "reject"
 
 ```bash
 FAIL2BAN_BLOCKTYPE=drop
 ```
 
-Il est alors possible de voir toutes les adresses ip us/anglaises et allemandes qui attaquent sans succès:
+- Il est alors possible de voir toutes les adresses ip us/anglaises et allemandes qui attaquent sans succès:
 
 ```bash
 docker exec $mailservercontainer setup fail2ban log
 ```
 
-Il est également possible voir ces adresses bannies:
+- Il est également possible voir ces adresses bannies:
 
 ```bash
 docker exec mailserver fail2ban-client status postfix
 docker exec mailserver fail2ban-client status dovecot
 ```
 
-## DNS
+### DNS
 
 - Se connecter au service DNS
 - Ajouter ou modifier un champ `mail._domainkey`:
@@ -2309,7 +2307,7 @@ _dmarc	TXT	10800	"v=DMARC1; p=quarantine; sp=none; fo=0; adkim=r; aspf=r; pct=10
 
 _Le champ DMARC dans un DNS permet de définir une politique pour gérer les emails non conformes à SPF et DKIM, aidant à protéger un domaine contre le phishing et l'usurpation d'identité, il sert aussi à mettre en place une boîte de messagerie qui recevera les résultats des tests des servers Microtsof, Google, GMX et diront si le serveur est bien paramétré._
 
-## Dernières considérations:
+### Dernières considérations
 
 Beaucoup de serveurs de messagerie comme ceux de Google, Microtsof, gmx etc. vérifient plusieurs choses pour être sûr que les mails viennent d'un serveur correctement paramétré:
 
