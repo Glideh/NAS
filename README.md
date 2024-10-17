@@ -112,6 +112,105 @@ Compter environ
 - **30s** pour un **SSD de 1.5To**
 - **8h** pour un **HDD de 4To**.
 
+## RaidZ
+
+Plus d'informations [ici](https://resinfo-gt.pages.in2p3.fr/zfs/doc/index.html)
+
+- Installer les outils
+
+```bash
+$ sudo apt install zfsutils-linux
+```
+
+- Nommer les disques (pour éviter d'utiliser la forme `sdx` qui peut changer et pouvoir les retrouver plus facilement dans le boitier)
+
+```bash
+$ nano /etc/zfs/vdev_id.conf
+```
+
+```bash
+alias SSD11 scsi-SNETAPP_X439_PHM23T0MCTO_75P0A056G32B
+alias SSD12 scsi-SNETAPP_X439_PHM23T0MCTO_85D0A00IG32B
+alias SSD13 scsi-SNETAPP_X439_PHM23T0MCTO_85D0A00NG32B
+alias SSD14 scsi-SNETAPP_X439_PHM23T0MCTO_65L0A00BG32B
+alias SSD21 scsi-SNETAPP_X439_PHM23T0MCTO_85F0A04FG32B
+alias SSD22 scsi-SNETAPP_X439_PHM23T0MCTO_65M0A040G32B
+alias SSD23 scsi-SNETAPP_X439_PHM23T0MCTO_65L0A00FG32B
+alias SSD24 scsi-SNETAPP_X439_PHM23T0MCTO_75P0A01BG32B
+alias SSD31 scsi-SNETAPP_X439_PHM23T0MCTO_Y5M0A034G32B
+alias SSD32 scsi-SNETAPP_X439_PHM23T0MCTO_65L0A01DG32B
+alias SSD33 scsi-SNETAPP_X439_PHM23T0MCTO_65L0A02DG32B
+alias SSD34 scsi-SNETAPP_X439_PHM23T0MCTO_X5O0A03TG32B
+alias SSD41 scsi-SNETAPP_X439_PHM23T0MCTO_7580A071G32B
+alias SSD42 scsi-SNETAPP_X439_PHM23T0MCTO_85F0A03UG32B
+alias SSD43 scsi-SNETAPP_X439_PHM23T0MCTO_65M0A020G32B
+alias SSD44 scsi-SNETAPP_X439_PHM23T0MCTO_85D0A01PG32B
+```
+
+Ici les disques ont été nommés sous la forme SSD**XY**
+- **X** étant le connecteur mini SAS du HBA
+- **Y** le connecteur **SFF-8482** en général identifié avec une étiquette
+
+![SFF-8482 identifiés](images/SFF-8482-identifier.png)
+
+- Prendre en compte nos vdevs renommés
+
+```bash
+sudo udevadm trigger
+```
+
+- Créer les volumes
+
+```bash
+sudo zpool create volume1 raidz SSD41 SSD42 SSD43 SSD44 SSD33 SSD34
+sudo zpool create volume2 raidz SSD11 SSD12 SSD13 SSD14 SSD21 SSD22 SSD23 SSD24 SSD31 SSD32
+```
+
+- Les volumes sont maintenant visibles et utilisables dans `/volume1` & `/volume2`
+
+### Replacer un disque
+
+Si la commande suivante affiche un disque en erreur
+
+```
+zpool status
+```
+
+Exemple
+
+```
+  pool: volume1
+ state: DEGRADED
+status: One or more devices are faulted in response to persistent errors.
+        Sufficient replicas exist for the pool to continue functioning in a
+        degraded state.
+action: Replace the faulted device or use 'zpool clear' to mark the device
+        repaired.
+   see: https://openzfs.github.io/openzfs-docs/msg/ZFS-8000-4J
+  scan: resilvered 80.1M in 00:00:01 with 0 errors on Fri May 24 14:55:33 2024
+config:
+
+	NAME                     STATE     READ WRITE CKSUM
+	volume1                  DEGRADED     0     0     0
+	  raidz1-0               DEGRADED     0     0     0
+	    SSD41                ONLINE       0     0     0
+	    SSD42                ONLINE       0     0     0
+	    SSD43                ONLINE       0     0     0
+	    SSD44                FAULTED      0    32     0  too many errors
+	    SSD33                ONLINE       0     0     0
+	    SSD34                ONLINE       0     0     0
+```
+
+- Éteindre la machine (sauf si racks avec backplane auquel cas il faut couper le disque avec `zpool offline`)
+- Remplacer physiquement le disque
+- Allumer la machine
+- Repérer l'identifiant du nouveau disque en fouillant dans `/dev/by-*` avec `smartctl`
+- Réaffecter le disque
+
+```
+sudo zpool replace volume1 SSD44
+```
+
 ## Raid classique
 
 - Vérifier les noms des disques à utiliser dans le raid
@@ -127,10 +226,9 @@ ll /dev | grep sd
 brw-rw----  1 root disk      8,    16 Jun 23 12:51 sdb
 brw-rw----  1 root disk      8,    32 Jun 23 12:51 sdc
 brw-rw----  1 root disk      8,    48 Jun 23 12:51 sdd
-
 ```
 
-Ou plus précisément en utilisant lsblk
+Ou plus précisément en utilisant `lsblk`
 
 Exemple
 
@@ -291,105 +389,6 @@ Verifier l'état du Raid:
 
 ```bash
 sudo mdadm --detail /dev/md0
-```
-
-## RaidZ
-
-Plus d'informations [ici](https://resinfo-gt.pages.in2p3.fr/zfs/doc/index.html)
-
-- Installer les outils
-
-```bash
-$ sudo apt install zfsutils-linux
-```
-
-- Nommer les disques (pour éviter d'utiliser la forme `sdx` qui peut changer et pouvoir les retrouver plus facilement dans le boitier)
-
-```bash
-$ nano /etc/zfs/vdev_id.conf
-```
-
-```bash
-alias SSD11 scsi-SNETAPP_X439_PHM23T0MCTO_75P0A056G32B
-alias SSD12 scsi-SNETAPP_X439_PHM23T0MCTO_85D0A00IG32B
-alias SSD13 scsi-SNETAPP_X439_PHM23T0MCTO_85D0A00NG32B
-alias SSD14 scsi-SNETAPP_X439_PHM23T0MCTO_65L0A00BG32B
-alias SSD21 scsi-SNETAPP_X439_PHM23T0MCTO_85F0A04FG32B
-alias SSD22 scsi-SNETAPP_X439_PHM23T0MCTO_65M0A040G32B
-alias SSD23 scsi-SNETAPP_X439_PHM23T0MCTO_65L0A00FG32B
-alias SSD24 scsi-SNETAPP_X439_PHM23T0MCTO_75P0A01BG32B
-alias SSD31 scsi-SNETAPP_X439_PHM23T0MCTO_Y5M0A034G32B
-alias SSD32 scsi-SNETAPP_X439_PHM23T0MCTO_65L0A01DG32B
-alias SSD33 scsi-SNETAPP_X439_PHM23T0MCTO_65L0A02DG32B
-alias SSD34 scsi-SNETAPP_X439_PHM23T0MCTO_X5O0A03TG32B
-alias SSD41 scsi-SNETAPP_X439_PHM23T0MCTO_7580A071G32B
-alias SSD42 scsi-SNETAPP_X439_PHM23T0MCTO_85F0A03UG32B
-alias SSD43 scsi-SNETAPP_X439_PHM23T0MCTO_65M0A020G32B
-alias SSD44 scsi-SNETAPP_X439_PHM23T0MCTO_85D0A01PG32B
-```
-
-Ici les disques ont été nommés sous la forme SSD**XY**
-- **X** étant le connecteur mini SAS du HBA
-- **Y** le connecteur **SFF-8482** en général identifié avec une étiquette
-
-![SFF-8482 identifiés](images/SFF-8482-identifier.png)
-
-- Prendre en compte nos vdevs renommés
-
-```bash
-sudo udevadm trigger
-```
-
-- Créer les volumes
-
-```bash
-sudo zpool create volume1 raidz SSD41 SSD42 SSD43 SSD44 SSD33 SSD34
-sudo zpool create volume2 raidz SSD11 SSD12 SSD13 SSD14 SSD21 SSD22 SSD23 SSD24 SSD31 SSD32
-```
-
-- Les volumes sont maintenant visibles et utilisables dans `/volume1` & `/volume2`
-
-### Replacer un disque
-
-Si la commande suivante affiche un disque en erreur
-
-```
-zpool status
-```
-
-Exemple
-
-```
-  pool: volume1
- state: DEGRADED
-status: One or more devices are faulted in response to persistent errors.
-        Sufficient replicas exist for the pool to continue functioning in a
-        degraded state.
-action: Replace the faulted device or use 'zpool clear' to mark the device
-        repaired.
-   see: https://openzfs.github.io/openzfs-docs/msg/ZFS-8000-4J
-  scan: resilvered 80.1M in 00:00:01 with 0 errors on Fri May 24 14:55:33 2024
-config:
-
-	NAME                     STATE     READ WRITE CKSUM
-	volume1                  DEGRADED     0     0     0
-	  raidz1-0               DEGRADED     0     0     0
-	    SSD41                ONLINE       0     0     0
-	    SSD42                ONLINE       0     0     0
-	    SSD43                ONLINE       0     0     0
-	    SSD44                FAULTED      0    32     0  too many errors
-	    SSD33                ONLINE       0     0     0
-	    SSD34                ONLINE       0     0     0
-```
-
-- Éteindre la machine (sauf si racks avec backplane auquel cas il faut couper le disque avec `zpool offline`)
-- Remplacer physiquement le disque
-- Allumer la machine
-- Repérer l'identifiant du nouveau disque en fouillant dans `/dev/by-*` avec `smartctl`
-- Réaffecter le disque
-
-```
-sudo zpool replace volume1 SSD44
 ```
 
 ## Températures
@@ -724,18 +723,6 @@ sudo usermod -aG docker $USER
 
 Nous proposons ici une manière simple d'installer et de gérer les services, sans aller jusqu'à utiliser des outils comme Kubernetes qui seraient sans doute surdimentionnés pour une utilisation privée:
 
-- Créer un répertoire pour chaque service depuis le `home` de l'utilisateur principal (pour y avoir accès facilement à la connexion SSH)
-
-```
-mkdir ~/<service>
-```
-
-- Créer la stack pour le service
-
-```
-nano ~/<service>/compose.yml
-```
-
 - Définir des fonctions pour gérer les services
 
 ```
@@ -774,9 +761,21 @@ update() {
 
 Ces fonctions fournissent des raccourcis pour gérer les services. L'avantage est qu'on peut utiliser la complétion du système de fichier pour récupérer le nom des stacks
 
+- Pour chaque service, créer un répertoire depuis le `home` de l'utilisateur principal (pour y avoir accès facilement à la connexion SSH)
+
+```
+mkdir ~/<service>
+```
+
+- Créer la stack pour le service
+
+```
+nano ~/<service>/compose.yml
+```
+
 ### Alias `compose`
 
-Ici avec Plex
+Défini plus haut dans notre `~/.bash_aliases`. Ici avec Plex
 
 ```
 ~/plex$ compose ps
@@ -1070,25 +1069,7 @@ services:
     env_file:
       - .env
     ports:
-      - 2283:3001
-    depends_on:
-      - redis
-      - database
-    restart: unless-stopped
-
-  immich-microservices:
-    container_name: immich_microservices
-    image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
-    # extends: # uncomment this section for hardware acceleration - see https://immich.app/docs/features/hardware-transcoding
-    #   file: hwaccel.transcoding.yml
-    #   service: cpu # set to one of [nvenc, quicksync, rkmpp, vaapi, vaapi-wsl] for accelerated transcoding
-    command: ['start.sh', 'microservices']
-    volumes:
-      - ${UPLOAD_LOCATION}:/usr/src/app/upload
-      - /etc/localtime:/etc/localtime:ro
-      - /volume1/Photos:/volume1/Photos:ro
-    env_file:
-      - .env
+      - 2283:2283
     depends_on:
       - redis
       - database
