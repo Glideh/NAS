@@ -833,6 +833,52 @@ ou depuis le répertoire du service
 ```
 ~/service$ update
 ```
+### Script de mise à jour de tous les services Docker hébergés sur le NAS
+
+On suppose que tous les services sont dans un même répertoire "/path/to/projects/"
+
+```
+#!/bin/bash
+
+# Répertoire contenant les projets Docker Compose
+PROJECTS_DIR="/path/to/projects/"
+
+# Vérifie si le répertoire existe
+if [ ! -d "$PROJECTS_DIR" ]; then
+  echo "Le répertoire $PROJECTS_DIR n'existe pas. Veuillez vérifier le chemin."
+  exit 1
+fi
+
+# Parcours les sous-répertoires contenant un fichier compose.yml
+for project_dir in "$PROJECTS_DIR"/*; do
+  # Vérifie si c'est bien un dossier et s'il contient un fichier docker-compose.yml
+  if [ -d "$project_dir" ] && [ -f "$project_dir/compose.yml" ]; then
+    echo "Traitement du projet dans le répertoire $project_dir"
+
+    # Va dans le répertoire du projet
+    cd "$project_dir" || continue
+
+    # Arrête les conteneurs
+    docker compose down
+
+    # Récupère les dernières versions des images
+    docker compose pull
+
+    # Relance les services
+    docker compose up -d
+
+    echo "Mise à jour du projet dans $project_dir terminée"
+  else
+    echo "Aucun compose.yml trouvé dans $project_dir, ou ce n'est pas un dossier valide."
+  fi
+done
+
+echo "Mise à jour de tous les projets terminée."
+```
+
+```
+chmod +x monscript.sh
+```
 
 # Services
 
