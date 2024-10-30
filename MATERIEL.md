@@ -1,5 +1,7 @@
 # Matériel
 
+Nous avons essayé de trouver un bon compromis budget (~**500€**) / performance / consommation électrique.
+
 |                      | Modèle                                  | Prix |                                                        |
 |----------------------|-----------------------------------------|-----:|--------------------------------------------------------|
 | **Processeur**           | AMD Athlon 220GE                  |  ~50€ | Faible consommation et suffisamment récent                          |
