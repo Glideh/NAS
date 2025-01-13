@@ -243,11 +243,41 @@ config:
 - Éteindre la machine (sauf si racks avec backplane auquel cas il faut couper le disque avec `zpool offline`)
 - Remplacer physiquement le disque
 - Allumer la machine
-- Repérer l'identifiant du nouveau disque en fouillant dans `/dev/by-*` avec `smartctl`
+- Repérer l'identifiant du nouveau disque en fouillant dans `/dev/disk/by-id` et en comparant avec les disques présents dans `/etc/zfs/vdev_id.conf`
+- Remplacer le disque dans `/etc/zfs/vdev_id.conf` (si besoin, relancer l'OS)
 - Réaffecter le disque
-
 ```
 sudo zpool replace volume1 SSD44
+```
+- Il sera alors possible de suivre la progression du "resilvering"
+```
+sudo zpool status volume1
+```
+
+Exemple
+
+```
+  pool: volume1
+ state: DEGRADED
+status: One or more devices is currently being resilvered.  The pool will
+	continue to function, possibly in a degraded state.
+action: Wait for the resilver to complete.
+  scan: resilver in progress since Mon Jan 13 08:18:45 2025
+	1.69T / 2.35T scanned at 4.58G/s, 65.4G / 2.35T issued at 177M/s
+	10.9G resilvered, 2.72% done, 03:46:20 to go
+config:
+
+	NAME                        STATE     READ WRITE CKSUM
+	volume1                     DEGRADED     0     0     0
+	  raidz1-0                  DEGRADED     0     0     0
+	    replacing-0             DEGRADED     0     0     0
+	      16695833288387324482  UNAVAIL      0     0     0  was /dev/disk/by-vdev/SSD41-part1/old
+	      SSD41                 ONLINE       0     0     0  (resilvering)
+	    SSD42                   ONLINE       0     0     0
+	    SSD43                   ONLINE       0     0     0
+	    SSD44                   ONLINE       0     0     0
+	    SSD33                   ONLINE       0     0     0
+	    SSD34                   ONLINE       0     0     0
 ```
 
 ## Raid classique
