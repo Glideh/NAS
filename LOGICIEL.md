@@ -410,6 +410,9 @@ On est censé [pouvoir y accéder par `host.docker.internal`](https://stackoverf
 Une fois les services lancés, vérifier sur le GUI de Prometheus (ici port 9090) que les agents (exporters) sont bien connectés dans l'onglet **Status/Target**.
 
 ![Prometheus](images/prometheus.png)
+
+#### Optimisation de `node-exporter`
+
 Attention, le `node-exporter` peut dépasser le temps max de réponse pour prometheus (onglet **Status/Target** pour voir le temps de récupération des métriques "Last Scrape"). Dans ce cas il est possible de réduire le périmètre des métriques, exemple:
 
 **compose.yml**
@@ -451,7 +454,9 @@ Il est aussi possible d'augmenter le délai d'expiration
 #...
 ```
 
-Par ailleurs cadvisor semble avoir une [utilisation de CPU relativement élevée](https://github.com/google/cadvisor/issues/2523). Il extiste des possibilités de la réduire:
+#### Optimisation de cAdvisor
+
+cAdvisor semble avoir une [utilisation de CPU relativement élevée](https://github.com/google/cadvisor/issues/2523). Il extiste des possibilités de la réduire:
 
 - Dans le `compose.yml` alonger l'interval de ["housekeeping"](https://github.com/google/cadvisor/blob/master/docs/runtime_options.md#housekeeping) à 10s (1s par défaut), et activer l'option [`docker_only`](https://github.com/google/cadvisor/blob/master/docs/runtime_options.md#limiting-which-containers-are-monitored)
 
@@ -467,11 +472,11 @@ Par ailleurs cadvisor semble avoir une [utilisation de CPU relativement élevée
 
 ```yml
   - job_name: cadvisor
-    scrape_interval: 15s
+    scrape_interval: 30s
 #...
 ```
 
-### Exemple de tableau de bord
+#### Exemple de tableau de bord
 
 ![Grafana](images/grafana.png)
 
