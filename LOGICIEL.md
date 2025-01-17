@@ -451,6 +451,28 @@ Il est aussi possible d'augmenter le délai d'expiration
 #...
 ```
 
+Par ailleurs cadvisor semble avoir une [utilisation de CPU relativement élevée](https://github.com/google/cadvisor/issues/2523). Il extiste des possibilités de la réduire:
+
+- Dans le `compose.yml` alonger l'interval de ["housekeeping"](https://github.com/google/cadvisor/blob/master/docs/runtime_options.md#housekeeping) à 10s (1s par défaut), et activer l'option [`docker_only`](https://github.com/google/cadvisor/blob/master/docs/runtime_options.md#limiting-which-containers-are-monitored)
+
+```yml
+  cadvisor-exporter:
+#...
+    command:
+      - '-housekeeping_interval=10s'
+      - '-docker_only=true'
+```
+
+- Dans le `prometheus.yml` alonger l'interval de récupération des données
+
+```yml
+  - job_name: cadvisor
+    scrape_interval: 15s
+#...
+```
+
+### Exemple de tableau de bord
+
 ![Grafana](images/grafana.png)
 
 ## Samba/CIFS
