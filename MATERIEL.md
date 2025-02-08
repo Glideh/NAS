@@ -244,7 +244,11 @@ config:
 - Remplacer physiquement le disque
 - Allumer la machine
 - Repérer l'identifiant du nouveau disque en fouillant dans `/dev/disk/by-id` et en comparant avec les disques présents dans `/etc/zfs/vdev_id.conf`
-- Remplacer le disque dans `/etc/zfs/vdev_id.conf` (si besoin, relancer l'OS)
+- Remplacer le disque dans `/etc/zfs/vdev_id.conf`
+- Faire prendre en comptes les modification
+```
+sudo udevadm trigger
+```
 - Réaffecter le disque
 ```
 sudo zpool replace volume1 SSD44
