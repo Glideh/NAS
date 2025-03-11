@@ -4,7 +4,7 @@ Liste des appareils que j'utilise avec HomeAssistant, **mon avis** général sur
 # Sonoff ZBMINIL2
 ![Sonoff ZBMINIL2](https://www.zigbee2mqtt.io/images/devices/ZBMINIL2.png)
 
-_Module d'interrupteur ZigBee_
+_**ZigBee** Module d'interrupteur_
 
 Mon avis général ★★★⯪☆
 
@@ -18,7 +18,7 @@ Mon avis général ★★★⯪☆
 # Nous A1Z
 ![Nous A1Z](https://www.zigbee2mqtt.io/images/devices/A1Z.png)
 
-_Prise ZigBee avec mesure de consommation_
+_**ZigBee** Prise électrique avec mesure de consommation_
 
 Mon avis général ★★★★⯪
 
@@ -30,11 +30,11 @@ Mon avis général ★★★★⯪
 # Aqara P1
 ![Aqara P1](https://www.zigbee2mqtt.io/images/devices/RTCGQ14LM.png)
 
-_Détecteur de mouvement, température, luminosité_
+_**ZigBee** Détecteur de mouvement, température, luminosité_
 
 Mon avis général ★★★★★
 
-✓ 2x moins cher que l'[équivalent Hue](#hue-motion) (~22€)  
+✓ 2x moins cher que l'[équivalent Hue](#hue-mouvement-int%C3%A9rieur) (~22€)  
 ✓ Possibilité de régler l'interval de détection  
 ✓ Bonne implémentation du ZigBee (reporting, binding)  
 
@@ -42,7 +42,7 @@ Mon avis général ★★★★★
 # Variateur Schneider
 ![Variateur Schneider](https://www.zigbee2mqtt.io/images/devices/NH3516A.png)
 
-_Variateur de lumière pour ampoules variables classiques_
+_**ZigBee** Variateur de lumière pour ampoules variables classiques_
 
 Mon avis général ★★★★⯪
 
@@ -54,7 +54,7 @@ Mon avis général ★★★★⯪
 # Hue Mouvement Intérieur
 ![Hue Mouvement Intérieur](https://www.zigbee2mqtt.io/images/devices/9290012607.png)
 
-_Détecteur de mouvement, température, luminosité_
+_**ZigBee** Détecteur de mouvement, température, luminosité_
 
 Mon avis général ★★★★★
 
@@ -67,7 +67,7 @@ Mon avis général ★★★★★
 # Hue Mouvement Extérieur
 ![Hue Mouvement Extérieur](https://www.zigbee2mqtt.io/images/devices/9290019758.png)
 
-_Détecteur de mouvement, température, luminosité_
+_**ZigBee** Détecteur de mouvement, température, luminosité_
 
 Mon avis général ★★★★★
 
@@ -75,3 +75,17 @@ Mon avis général ★★★★★
 ✓ Piles très classiques AAA  
 ✓ Bonne implémentation du ZigBee (reporting, binding)  
 ✗ Cher comme tout les Hue (~55€)  
+
+
+# Shelly Plus PM Mini
+![Shelly Plus PM Mini](https://github.com/user-attachments/assets/c40e5a63-8a1e-4e9a-aaa2-c90c9059c8ff)
+
+
+_**Wifi** Module de mesure de consommation électrique_
+
+Mon avis général ★★★★★
+
+✓ Pas cher (~15€)  
+✓ Intégration domotique facile  
+✓ Encore plus petit que le [ZBMINIL2](#sonoff-zbminil2)  
+✓ Mesure de consommation précise
