@@ -1233,7 +1233,7 @@ services:
     image: jellyfin/jellyfin
     container_name: jellyfin
     restart: 'unless-stopped'
-    user: 1000:1000 # Régler 
+    user: 1000:1000
     ports:
       - 8096:8096
     volumes:
