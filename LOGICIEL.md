@@ -1245,6 +1245,38 @@ services:
       - /dev/dri/renderD128:/dev/dri/renderD128
 ```
 
+## FileBrowser
+
+Stack pour [FileBrowser Site](https://filebrowser.org/)
+Stack pour [FileBrowser Github](https://github.com/filebrowser/filebrowser)
+
+Cette application est développé en Go et Vuejs. Permet de proposer une interface épurée afin de naviguer/consulter/modifier et créer des documents et dossiers dans son nas
+Propose une gestion des user et roles
+Propose du partage de documents de façon anonyme et avec une durée limitée.
+
+**compose.yml**
+
+```yml
+services:
+  filebrowser:
+    container_name: filebrowser
+    restart: unless-stopped
+    image: 'filebrowser/filebrowser:s6'
+    environment:
+      - PGID=1000
+      - PUID=1000
+    volumes:
+      - /path/to/mon/volume/filebrowser/config:/config
+      - /path/to/mon/volume/database:/database
+      - /path/to/mon/volume/ged:/srv
+
+networks:
+  default:
+    name: traefik
+    external: true
+
+```
+
 ## Nextclaude
 
 Nextcloud est un outil d'hébergement de fichiers et une plateforme de collaboration apportant un grand nombre de fonctionnalités sous forme d'extensions.
