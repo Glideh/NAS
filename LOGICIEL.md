@@ -1219,6 +1219,32 @@ services:
     network_mode: host
 ```
 
+## Jellyfin
+
+Stack pour [Jellyfin](https://github.com/jellyfin/jellyfin)
+
+- Créer les répertoires `config` et `cache` avant (ou y dédier des volumes), sinon l'installeur n'aura pas les permissions pour écrire dedans
+
+**compose.yml**
+
+```yml
+services:
+  jellyfin:
+    image: jellyfin/jellyfin
+    container_name: jellyfin
+    restart: 'unless-stopped'
+    user: 1000:1000 # Régler 
+    ports:
+      - 8096:8096
+    volumes:
+      - ./config:/config
+      - ./cache:/cache
+      - /volume2:/data/volume2:ro
+    devices:
+      # Transcoding matériel
+      - /dev/dri/renderD128:/dev/dri/renderD128
+```
+
 ## Nextclaude
 
 Nextcloud est un outil d'hébergement de fichiers et une plateforme de collaboration apportant un grand nombre de fonctionnalités sous forme d'extensions.
