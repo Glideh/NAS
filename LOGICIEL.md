@@ -1250,8 +1250,8 @@ services:
 Stack pour [FileBrowser Site](https://filebrowser.org/)
 Stack pour [FileBrowser Github](https://github.com/filebrowser/filebrowser)
 
-Cette application est développé en Go et Vuejs. Permet de proposer une interface épurée afin de naviguer/consulter/modifier et créer des documents et dossiers dans son nas
-Propose une gestion des user et roles
+Cette application est développée en Go et Vuejs. Permet de proposer une interface épurée afin de naviguer/consulter/modifier et créer des documents et dossiers dans son nas
+Propose une gestion des users et roles
 Propose du partage de documents de façon anonyme et avec une durée limitée.
 
 **compose.yml**
