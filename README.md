@@ -53,6 +53,7 @@ Le but est de trouver les solutions pour créer un serveur à partir de zero aut
    * [Domotique](./LOGICIEL.md#domotique)
    * [Mises à jour](./LOGICIEL.md#mises-à-jour)
    * [Plex](./LOGICIEL.md#plex)
+   * [FileBrowser](./LOGICIEL.md#FileBrowser)
    * [Nextclaude](./LOGICIEL.md#nextclaude)
    * [CozyClaude](./LOGICIEL.md#cozyclaude)
    * [Mailserver](./LOGICIEL.md#mailserver)
