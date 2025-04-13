@@ -1217,6 +1217,7 @@ services:
       - PLEX_UID=1000
       - PLEX_GID=1000
       - PLEX_CLAIM= # Pour déclarer un nouveau serveur
+        # Générer un token ici: https://account.plex.tv/fr/claim
     network_mode: host
 ```
 
