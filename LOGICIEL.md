@@ -1216,6 +1216,7 @@ services:
       - TZ=Europe/Paris
       - PLEX_UID=1000
       - PLEX_GID=1000
+      - PLEX_CLAIM= # Pour déclarer un nouveau serveur
     network_mode: host
 ```
 
