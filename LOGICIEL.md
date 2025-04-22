@@ -276,6 +276,34 @@ echo "Mise à jour de tous les projets terminée."
 chmod +x monscript.sh
 ```
 
+## Rsync
+
+* Copier/synchroniser un répertoire d'un serveur à un autre
+
+```
+rsync -a <serveur>:<repertoire>/ <repertoire-local>
+```
+
+Ajouter l'option `--info=progress2` pour les répertoires volumineux  
+Ajouter l'option `--mkpath` pour que rsync crée tout seul le répertoire cible avec le même nom (dans ce cas il faut ometre le `/` après le `<repertoire>` source)
+
+* Copier un répertoire contenant des fichiers auxquels notre utilisateur n'a pas accès en gardant les permissions & owners
+  * Après avoir ajouté `sudo rsync` dans les exclusions de sudoers pour notre utilisateur sur le serveur distant
+
+```
+echo "${USER} ALL=NOPASSWD: /usr/bin/rsync" | sudo tee /etc/sudoers.d/rsync
+```
+
+```
+sudo rsync -av --rsync-path="sudo rsync" <utilisateur>@<serveur>:<repertoire> <repertoire-local>
+```
+
+Exemple:
+
+```
+sudo rsync -av --info=progress2 --rsync-path="sudo rsync" me@nas1:/volume1/photos /volume1/photos
+```
+
 # Services
 
 [Liste réputée et maintenue de services auto-hébergés](https://github.com/awesome-selfhosted/awesome-selfhosted)
