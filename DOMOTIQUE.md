@@ -1,4 +1,5 @@
-Liste des appareils que j'utilise avec HomeAssistant, **mon avis** général sur chaque, les avantages/inconvénients, ceux que je considère les plus utiles en premier.
+Liste des appareils que j'utilise avec HomeAssistant, **mon avis** général sur chaque, leurs avantages/inconvénients à mes yeux.  
+Cette liste n'inclut que les appareils que j'ai apprécié.
 
 
 # Sonoff ZBMINIL2
