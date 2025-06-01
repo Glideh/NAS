@@ -2,63 +2,6 @@
 
 Nous avons personnellement choisi **Ubuntu Server minimized**, majoritairement pour des questions d'habitude, mais bien sûr n'importequel Linux fera l'affaire.
 
-## Configuration d'une IP fixe
-
-Il est conseillé pour faciliter l'utilisation du serveur de lui attribuer une IP fixe.  
-Pour ce faire, le plus simple est de configurer un bail DHCP sur le routeur.
-Mais il est aussi possible de la fixer sur le serveur, voici la marche à suivre sur Ubuntu 22 :
-
-- Installer `network-manager`
-
-```bash
-sudo apt install network-manager
-```
-
-- Déterminer l'identifiant de la carte réseau
-
-```bash
-ip a
-```
-
-![identifiant carte](images/ipa.webp)
-
-- Modifier le fichier de configuration
-
-```bash
-# Sauvegarde du fichier actuel
-sudo cp /etc/netplan/50-cloud-init.yaml /etc/netplan/50-cloud-init.yaml.bak
-sudo nano /etc/netplan/50-cloud-init.yaml
-```
-
-- On renseigne le fichier de la façon suivante
-
-**50-cloud-init.yaml**
-
-```yml
-network:
-  version: 2
-  renderer: NetworkManager
-  ethernets:
-    eth0: # Identifiant de la carte réseau 
-      addresses: [192.168.1.200/24] # IP souhaitée
-      routes:
-        - to: default
-          via: 192.168.1.254 # IP du routeur Freebox Révolution
-      nameservers:
-        addresses: [8.8.8.8, 8.8.4.4] # Serveur DNS Google
-      dhcp4: false
-      dhcp6: false
-```
-
-- Redémarrage du service
-
-```bash
-# On applique les changements
-sudo netplan apply
-# On redémarre le service
-sudo systemctl restart systemd-networkd
-```
-
 ## LVM
 
 Par défaut, certains OS réservent une **part inférieure** à l'espace total disponible du disque pour la création du **système de fichier principal**; ceci pour plusieurs raisons (notamment de flexibilité, performance et sécurité). C'est pour cette raison que **LVM** est souvent utilisé par défaut.
@@ -105,7 +48,7 @@ Nous venons d'**ajouter 100Go** au volume avec l'option `-L` et d'**étendre le 
 
 ## Gestion des services
 
-Les services mentionnés [dans le chapitre suivant](#services) utilisent tous **Docker** avec son extention **Compose**.
+Les services mentionnés [dans le chapitre des services](#services) utilisent tous **Docker** avec son extention **Compose**.
 
 Il est conseillé d'installer Docker en suivant la [documentation officielle](https://docs.docker.com/engine/install/ubuntu/) pour éviter de se retrouver avec une ancienne version ou modifiée par le mainteneur du gestionnaire de dépendances.  
 Pour en simplifier l'utilisation, ne pas oublier de s'ajouter au groupe `docker` après l'installation:
@@ -274,6 +217,63 @@ echo "Mise à jour de tous les projets terminée."
 
 ```
 chmod +x monscript.sh
+```
+
+## Configuration d'une IP fixe
+
+Il est conseillé pour faciliter l'utilisation du serveur de lui attribuer une IP fixe.  
+Pour ce faire, le plus simple est de configurer un bail DHCP sur le routeur.
+Mais il est aussi possible de la fixer sur le serveur, voici la marche à suivre sur Ubuntu 22 :
+
+- Installer `network-manager`
+
+```bash
+sudo apt install network-manager
+```
+
+- Déterminer l'identifiant de la carte réseau
+
+```bash
+ip a
+```
+
+![identifiant carte](images/ipa.webp)
+
+- Modifier le fichier de configuration
+
+```bash
+# Sauvegarde du fichier actuel
+sudo cp /etc/netplan/50-cloud-init.yaml /etc/netplan/50-cloud-init.yaml.bak
+sudo nano /etc/netplan/50-cloud-init.yaml
+```
+
+- On renseigne le fichier de la façon suivante
+
+**50-cloud-init.yaml**
+
+```yml
+network:
+  version: 2
+  renderer: NetworkManager
+  ethernets:
+    eth0: # Identifiant de la carte réseau 
+      addresses: [192.168.1.200/24] # IP souhaitée
+      routes:
+        - to: default
+          via: 192.168.1.254 # IP du routeur Freebox Révolution
+      nameservers:
+        addresses: [8.8.8.8, 8.8.4.4] # Serveur DNS Google
+      dhcp4: false
+      dhcp6: false
+```
+
+- Redémarrage du service
+
+```bash
+# On applique les changements
+sudo netplan apply
+# On redémarre le service
+sudo systemctl restart systemd-networkd
 ```
 
 ## Rsync
