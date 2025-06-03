@@ -504,6 +504,126 @@ cAdvisor semble avoir une [utilisation de CPU relativement élevée](https://git
 #...
 ```
 
+#### Ajout d'un exporter pour la HBA
+
+Créer un repertoire dans lequel nous mettrons tous les fichiers de configs et autres scripts:
+
+```bash
+mkdir $yourlocation/hba-exporter-temp
+```
+
+- Récuperer le .deb de storcli sur [le site de Broadcom](https://docs.broadcom.com/docs/1232743501)
+- Copier le fichier SAS35_StorCLI_7_27-007.2707.0000.0000.zip/storcli_rel/Unified_storcli_all_os.zip/Unified_storcli_all_os/Ubuntu/storcli_007.2707.0000.0000_all.deb et renomer ce fichier en "storcli.deb"
+- Créer un dockerfile avec les spécifications suivantes:
+
+```bash
+nano dockerfile
+```
+
+```dockerfile
+FROM ubuntu:22.04
+
+# Install system dependencies including Python and pip
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    unzip \
+    libncurses5 \
+    libcurl4 \
+    python3 \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy and install storcli .deb
+COPY storcli.deb /tmp/storcli.deb
+RUN dpkg -i /tmp/storcli.deb || apt-get install -yf && rm /tmp/storcli.deb
+
+# Optional: verify it works
+RUN /opt/MegaRAID/storcli/storcli64 show || true
+
+# Install Prometheus Python client
+RUN pip3 install prometheus_client
+
+# Add exporter script
+COPY exporter.py /exporter.py
+
+CMD ["python3", "/exporter.py"]
+```
+
+- Créer un script python avec ces définitions:
+
+```bash
+nano exporter.py
+```
+
+```python
+from prometheus_client import start_http_server, Gauge
+import subprocess
+import time
+
+gauge = Gauge("hba_temperature_celsius", "LSI HBA Temperature in Celsius", ["temperature_type"])
+
+def get_temp():
+    try:
+        output = subprocess.check_output(
+            ["/opt/storcli/storcli64", "/c0", "show", "temperature"],
+            encoding="utf-8"
+        )
+        for line in output.splitlines():
+            if "ROC temperature" in line:
+                temp = float(line.strip().split()[-1])
+                return temp
+    except Exception as e:
+        print(f"Error fetching temperature: {e}")
+    return None
+
+if __name__ == "__main__":
+    start_http_server(9201)
+    while True:
+        temp = get_temp()
+        if temp is not None:
+            gauge.labels(temperature_type="current").set(temp)
+        time.sleep(30)
+```
+
+- Ajouter cette configuration à votre prometheus.yml pour scraper ce nouveau metric
+
+```yml
+- job_name: 'hba_temp_exporter'
+  static_configs:
+    - targets: ['hba-temp-exporter:9201']
+```
+
+- Se rendre dans le répertoire créé plus haut et construire la nouvelle image
+
+```bash
+cd $yourlocation/hba-exporter-temp && docker build -t hba-temp-exporter .
+```
+
+- Ajouter la configuration de ce nouveau container à la stack de surveillance
+
+```yml
+  hba-temp-exporter:
+    image: hba-temp-exporter:latest
+    container_name: hba-temp-exporter
+    restart: unless-stopped
+    privileged: true
+    ports:
+      - "9201:9201"
+    volumes:
+      - /dev:/dev
+      - /opt/MegaRAID:/opt
+    network_mode: "grafanal"
+```
+
+Une fois le container lancé, on peut vérifier le fonctionnement en se rendant sur http://$your_server_ip:9201/, là on pourra vérifier la dernière ligne:
+
+```
+hba_temperature_celsius{temperature_type="current"} 42.0
+```
+
+On peut maintenant vérifier sur Prometheus puis Grafanal si le metric "hba_temperature_celsius" est présent puis l'utiliser pour créer de nouveaux panels alertes etc.
+
+![HBA_sur_Grafana](images/hba_temp_grafanal.png)
+
 #### Exemple de tableau de bord
 
 ![Grafana](images/grafana.png)
