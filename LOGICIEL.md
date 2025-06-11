@@ -1397,12 +1397,13 @@ services:
 
 ## FileBrowser
 
-Stack pour [FileBrowser Site](https://filebrowser.org/)
-Stack pour [FileBrowser Github](https://github.com/filebrowser/filebrowser)
+Stack pour [FileBrowser](https://filebrowser.org/)  
+[Github](https://github.com/filebrowser/filebrowser)
 
-Cette application est développée en Go et Vuejs. Permet de proposer une interface épurée afin de naviguer/consulter/modifier et créer des documents et dossiers dans son nas
-Propose une gestion des users et roles
-Propose du partage de documents de façon anonyme et avec une durée limitée.
+Cette application est développée en Go et Vuejs.
+- Interface épurée afin de gérer des documents et répertoires
+- Gestion des utilisateurs et rôles
+- Partage de documents de façon anonyme et avec une durée limitée
 
 **compose.yml**
 
@@ -1416,15 +1417,14 @@ services:
       - PGID=1000
       - PUID=1000
     volumes:
-      - /path/to/mon/volume/filebrowser/config:/config
-      - /path/to/mon/volume/database:/database
-      - /path/to/mon/volume/ged:/srv
+      - ./config:/config
+      - ./database:/database
+      - ./srv:/srv
 
 networks:
   default:
     name: traefik
     external: true
-
 ```
 
 ## Nextclaude
