@@ -624,6 +624,129 @@ On peut maintenant vérifier sur Prometheus puis Grafanal si le metric "hba_temp
 
 ![HBA_sur_Grafana](images/hba_temp_grafanal.png)
 
+#### Ajout de la surveillance des logs
+
+Ajouter les deux stacks suivantes au compose Grafanal
+
+```yml
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/config/loki-config.yaml
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki-config.yaml:/etc/loki/config/loki-config.yaml
+      - ./loki-data:/loki
+      - ./loki-wal:/wal
+
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: promtail
+    restart: unless-stopped
+    command: -config.file=/etc/promtail/config.yaml
+    volumes:
+      - ./promtail-config.yaml:/etc/promtail/config.yaml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+
+```
+
+Créer le fichier de configuration pour Promtail (exporter des logs vers Loki)
+
+```yml
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+
+      # Optional: also add container_name as a label for filtering
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: container
+```
+
+Courte explication: Promtail va scraper les logs venant des stdout de tous les containers du server
+
+Créer le fichier de configuration pour Loki avec par exemple ce paramétrage basique (Loki est aux logs ce que Prometheus est aux metrics standrads)
+
+```yml
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9096
+
+ingester:
+  lifecycler:
+    address: 127.0.0.1
+    ring:
+      kvstore:
+        store: inmemory
+      replication_factor: 1
+  chunk_idle_period: 5m
+  max_chunk_age: 1h
+  chunk_target_size: 1048576
+  chunk_retain_period: 30s
+  max_transfer_retries: 0
+
+schema_config:
+  configs:
+    - from: 2020-10-24
+      store: boltdb-shipper
+      object_store: filesystem
+      schema: v11
+      index:
+        prefix: index_
+        period: 24h
+
+storage_config:
+  boltdb_shipper:
+    active_index_directory: /loki/index
+    cache_location: /loki/cache
+    shared_store: filesystem
+  filesystem:
+    directory: /loki/chunks
+
+limits_config:
+  enforce_metric_name: false
+  reject_old_samples: true
+  reject_old_samples_max_age: 1800h
+
+compactor:
+  working_directory: /loki/compactor
+  shared_store: filesystem
+
+ruler:
+  alertmanager_url: http://alertmanager:9093
+```
+
+Créer les répertoires "loki-data" et "loki-wal" et s'assurer que Loki pourra ecrire dedans
+
+```bash
+mkdir loki-data loki-wal
+chmod xxx loki-data loki-wal
+```
+
+Lancer les deux nouveaux containers puis tester dans Grafanal si les données sont bien scrapées:
+
+![loki1](images/loki1.PNG)
+
+On peut maintenant créer une alerte par exemple pour être averti lorsqu'un job de backup a foiré sur Backrest
+
+![loki2](images/loki2.PNG)
+
 #### Exemple de tableau de bord
 
 ![Grafana](images/grafana.png)
