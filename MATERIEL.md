@@ -84,7 +84,7 @@ Il faut savoir que les SAS expanders n'utilisent le slot PCIe que pour l'aliment
 
 # Alimentation des disques
 
-Les disques SAS implémentent une fonctionnalité appellée **Power Disable** qui permet d'éteindre un disque physiquement dans le but de le sortir de son emplacement par exemple (pour les machines 19" d'entreprise).
+Les disques SAS implémentent une fonctionnalité appellée **[Power Disable](https://www.disctech.com/powerdisable)** qui permet d'éteindre un disque physiquement dans le but de le sortir de son emplacement par exemple (pour les machines 19" d'entreprise).
 
 Pour éteindre le disque, il suffit d'**alimenter le pin 3** du connecteur SATA.
 
