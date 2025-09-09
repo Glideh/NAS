@@ -671,7 +671,7 @@ scrape_configs:
     docker_sd_configs:
       - host: unix:///var/run/docker.sock
 
-      # Optional: also add container_name as a label for filtering
+    relabel_configs:
       - source_labels: ['__meta_docker_container_name']
         regex: '/(.*)'
         target_label: container
