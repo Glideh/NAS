@@ -650,6 +650,7 @@ Ajouter les deux stacks suivantes au compose Grafanal
       - ./promtail-config.yaml:/etc/promtail/config.yaml
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./promtail-positions:/positions
 
 ```
 
