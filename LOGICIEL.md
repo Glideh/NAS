@@ -1012,7 +1012,7 @@ Voila l'installation que nous recommandons pour [Træfik](https://doc.traefik.io
 ```yml
 services:
   traefik:
-    image: traefik:v3.0.0
+    image: traefik
     restart: unless-stopped
     container_name: traefik
     environment:
@@ -1042,7 +1042,7 @@ log:
 
 providers:
   file:
-    directory: /routers
+    directory: /dynamic
     watch: true
 
 entryPoints:
@@ -1072,7 +1072,7 @@ certificatesResolvers:
 
 Exemple de router pour Vaulwarden
 
-**routers/vaultwarden.yml**
+**dynamic/routers/vaultwarden.yml**
 
 ```yml
 http:
@@ -1092,9 +1092,21 @@ http:
 
 Bien sûr, il faut remplacer `<mon-domaine>` par le domaine concerné...
 
-Même à chaud, pour ajouter un routeur, il suffit de créer un fichier dans le répertoire `routers` pour que la config soit prise en compte.
+Même à chaud, pour ajouter un routeur, il suffit de créer ou de modifier un fichier dans le répertoire `dynamic` pour que la config soit prise en compte. Par exemple il est possible d'avoir une arborescence `dynamic/routers` contenant un fichier par routeur pour les séparer proprement.
 
 La syntaxe YML est plus lisible que les configurations exposées dans des labels sur les services Docker.
+
+### CrowdSec
+
+Alternative plus évoluée à Fail2Ban, [CrowdSec](https://www.crowdsec.net/) permet d'ajouter une sécurité par ban d'IP en analysant le traffic.
+
+[Ce très bon article](https://www.it-connect.fr/reverse-proxy-traefik-integration-de-crowdsec-pour-bloquer-les-attaques/) explique comment le configurer en tant que middleware dans Traefik.
+
+Attention: Si CrowdSec est configuré dans la même stack que Traefik, il va sans doute démarrer **après** ce dernier, ce qui provoque une erreur de connexion:
+
+> traefik   | time=2026-05-27T16:11:54.725+02:00 level=ERROR msg="handleMetricsTicker:reportMetrics reportMetrics:query crowdsecQuery:unreachable url:http://crowdsec:8080/v1/usage-metrics Post \"http://crowdsec:8080/v1/usage-metrics\": dial tcp 172.18.0.11:8080: connect: connection refused" component=CrowdsecBouncerTraefikPlugin
+
+Il doit être possible de configurer un healthcheck sur CrowdSec et de le définir comme condition dans le depends_on de Traefik.
 
 ## Seedbox
 
