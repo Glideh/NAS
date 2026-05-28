@@ -940,7 +940,7 @@ services:
       - 51820:51820/udp
 ```
 
-## Gestionnaire de mots de passe
+## Gestionnaire de mots de passe (Vaultwarden)
 
 Stack pour [Vaultwarden](https://github.com/dani-garcia/vaultwarden)
 
@@ -1003,7 +1003,7 @@ docker compose up -d
 
 _Plus d'informations [ici](https://github.com/dani-garcia/vaultwarden/wiki/Enabling-admin-page#secure-the-admin_token)_
 
-## Reverse proxy
+## Reverse proxy (Træfik)
 
 Voila l'installation que nous recommandons pour [Træfik](https://doc.traefik.io/traefik/). Elle a les avantages d'être facile à apréhender/maintenir par son découpage et de pouvoir surveiller les services à activer/désactiver et de manière centralisée.
 
@@ -1106,7 +1106,25 @@ Attention: Si CrowdSec est configuré dans la même stack que Traefik, il va san
 
 > traefik   | time=2026-05-27T16:11:54.725+02:00 level=ERROR msg="handleMetricsTicker:reportMetrics reportMetrics:query crowdsecQuery:unreachable url:http://crowdsec:8080/v1/usage-metrics Post \"http://crowdsec:8080/v1/usage-metrics\": dial tcp 172.18.0.11:8080: connect: connection refused" component=CrowdsecBouncerTraefikPlugin
 
-Il doit être possible de configurer un healthcheck sur CrowdSec et de le définir comme condition dans le depends_on de Traefik.
+Il est possible de configurer un healthcheck sur CrowdSec et de le définir comme condition dans le depends_on de Traefik.
+
+```yml
+# Healthcheck sur CrowdSec
+  crowdsec:
+# ...
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider --quiet --tries=1 --timeout=5 http://localhost:8080/health > /dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+# Condition de dépendance sur Traefik
+  traefik:
+# ...
+    depends_on:
+      crowdsec:
+        condition: service_healthy
+```
 
 ## Seedbox
 
