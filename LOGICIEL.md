@@ -1202,60 +1202,9 @@ Pour utiliser [Qbittorrent](https://github.com/qbittorrent/qBittorrent) à la pl
 
 ## Sauvegarde
 
-Ici l'idée est d'utiliser [Restic](https://restic.readthedocs.io/en/stable/) avec un stockage en SFTP
+Ici l'idée est d'utiliser [Restic](https://restic.readthedocs.io/en/stable/) avec [backrest](https://github.com/garethgeorge/backrest) en client et [rest-server](https://github.com/restic/rest-server) du coté stockage.
 
-### SFTP
-
-Service SSH dockerisé à configurer sur la machine qui accueillira des sauvegardes
-
-**compose.yml**
-
-```yml
-services:
-  sftp:
-    image: atmoz/sftp
-    container_name: sftp
-    restart: unless-stopped
-    volumes:
-      - ./sftp/users.conf:/etc/sftp/users.conf:ro
-      - ./sftp/backup/<utilisateur>:/home/<utilisateur>/cible # Répertoire de sauvegarde
-      - ./sftp/keys/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key
-      - ./sftp/keys/ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key
-      - ./sftp/keys/sftp.<utilisateur>.pub:/home/<utilisateur>/.ssh/keys/id_rsa.pub
-    ports:
-      - "<port-sftp>:22"
-```
-
-- Créer les répertoires de config SSH et de sauvegarde
-
-```
-mkdir -p sftp/ssh
-mkdir -p sftp/backup/<utilisateur>
-```
-
-- Définir les utilisateurs
-
-```
-echo "<utilisateur>::<uid>:<gid>:<repertoire>" >> sftp/users.conf
-
-# Exemple
-echo "me::1000:1000:cible" >> sftp/users.conf
-```
-
-- Créer les clés
-
-```
-ssh-keygen -t ed25519 -f sftp/ssh/ssh_host_ed25519_key < /dev/null
-ssh-keygen -t rsa -b 4096 -f sftp/ssh/ssh_host_rsa_key < /dev/null
-```
-
-Plus d'infos sur le [Github](https://github.com/atmoz/sftp)
-
-### Restic
-
-Nous évoquerons deux versions, une avec GUI **Backrest** et une sans **Resticker**. 
-
-#### Backrest
+### Backrest
 
 Backrest est un GUI au dessus de Restic (inclu dans le service).
 
@@ -1271,8 +1220,9 @@ services:
       - ./backrest/data:/data
       - ./backrest/config:/config
       - ./backrest/cache:/cache
-      - ./backrest/source:/source:ro # Données à sauvegarder
-      - ./backrest/ssh:/root/.ssh # Config & clés SSH
+      - /chemin-sauveguarder-1://chemin-sauveguarder-1:ro # \
+      - /chemin-sauveguarder-2://chemin-sauveguarder-2:ro #  Données à sauvegarder
+      - /chemin-sauveguarder-3://chemin-sauveguarder-3:ro # /
     environment:
       - BACKREST_DATA=/data
       - BACKREST_CONFIG=/config/config.json
@@ -1282,125 +1232,54 @@ services:
       - "9898:9898"
 ```
 
-- Créer le répertoire de config SSH
-
-```
-mkdir -p backrest/ssh
-```
-
-- Générer les clés
-
-```
-ssh-keygen -f ./backrest/ssh/id_rsa
-```
-
-- Générer le `known_hosts`
-
-```
-ssh-keyscan -H -p <port-sftp> <domaine> > ./backrest/ssh/known_hosts
-```
-
-_Remplacer `<domaine>` et `<port-sftp>` par l'hôte et le port sur lequels les données seront sauvegardées_
-
-- Créer la config SSH dans `backrest/ssh/config`
-
-```
-Host <alias>
-  Hostname <domaine>
-  User <utilisateur>
-  Port <port-sftp>
-```
-
-- Appliquer les bonnes permissions
-
-```
-chmod 700 backrest/ssh
-chmod 600 backrest/ssh/*
-sudo chown -R root:root backrest/ssh/
-```
-
 - Une fois le service lancé, accéder au GUI avec un navigateur sur le port `9898`
-- Créer un _Repo_ avec les paramètres suivants
-
-```yml
-uri: sftp:<alias>:backup
-password: <mot-de-passe-pour-chiffrer-les-sauvegardes>
-```
-
-Exemple:
-
-![Repo Backrest](images/backrest-repo.png)
-
-- Et enfin, créer un _Plan_ avec les données à sauvegarder (`/source` défini dans notre compose)
+- Créer un _Repo_ avec les paramètres du rest-server cible
+- Créer un _Plan_ avec les données à sauvegarder (dans les `/chemin-sauveguarder-x` définis dans notre compose)
 
 Plus d'infos sur le [Github](https://github.com/garethgeorge/backrest)
 
-#### Resticker
+### rest-server
 
-Resticker est un Restic dockerisé sans GUI avec une configurations simplifiée dans des variables d'environnement.
+Pour la personne qui fournit un service de stockage Restic, il est possible d'utiliser [rest-server](https://github.com/restic/rest-server) qui permet d'exposer une API REST.
 
-**compose.yml**
+Exemple
 
 ```yml
 services:
-  restic:
-    image: mazzolino/restic
-    container_name: restic
-    hostname: <hote-source>
+  rest:
+    image: restic/rest-server
+    container_name: rest-server
     restart: unless-stopped
-    environment:
-#      RUN_ON_STARTUP: "true"
-      BACKUP_CRON: "0 30 3 * * *"
-      RESTIC_REPOSITORY: sftp:<alias>:backup
-      RESTIC_PASSWORD: ${RESTIC_PASSWORD}
-      RESTIC_BACKUP_SOURCES: /data
-      RESTIC_BACKUP_ARGS: >-
-        --verbose
-      RESTIC_FORGET_ARGS: >-
-        --keep-last 10
-        --keep-daily 7
-        --keep-weekly 5
-#        --keep-monthly 12
-      TZ: Europe/Paris
     volumes:
-      - ./resticker/source:/data:ro # Données à sauvegarder
-      - ./resticker/ssh:/run/secrets/.ssh:ro
+      - /chemin/pour/les/sauveguardes:/data
+    environment:
+      - OPTIONS=--log -
+    networks:
+      - traefik
 ```
 
-**.env**
+_Le service écoute sur le port 8000 par défaut, qui sera exposé à Træfik_
 
-```
-RESTIC_PASSWORD=<mot-de-passe-pour-chiffrer-les-sauvegardes>
-```
+Configurer un routeur sur Træfik, exemple:
 
-- Créer le répertoire de config SSH
-
+```yml
+http:
+  routers:
+    rest-server:
+      service: rest-server
+      rule: "Host(`backup.mon-domaine.net`)"
+      entrypoints: websecure
+      tls:
+        certResolver: my
+#        certResolver: staging
+      middlewares:
+        - crowdsec@file
+  services:
+    rest-server:
+      loadBalancer:
+        servers:
+          - url: "http://rest-server:8000"
 ```
-mkdir -p resticker/ssh
-```
-
-- Générer les clés
-
-```
-ssh-keygen -f ./resticker/ssh/id_rsa
-```
-
-- Générer le known_hosts
-
-```
-ssh-keyscan -H -p <port-sftp> <domaine> > ./resticker/ssh/known_hosts
-```
-
-- Créer la config SSH dans `resticker/ssh/config`
-
-```
-Host <alias>
-  Hostname <domaine>
-  User <utilisateur>
-  Port <port-sftp>
-```
-
-Plus d'informations sur le [Github](https://github.com/djmaze/resticker)
 
 ## Domotique
 
