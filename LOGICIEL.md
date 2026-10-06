@@ -1212,7 +1212,7 @@ Backrest est un GUI au dessus de Restic (inclu dans le service).
 
 ```yml
 services:
-  restic:
+  backrest:
     image: garethgeorge/backrest
     container_name: backrest
     restart: unless-stopped
@@ -1220,9 +1220,9 @@ services:
       - ./backrest/data:/data
       - ./backrest/config:/config
       - ./backrest/cache:/cache
-      - /chemin-sauveguarder-1://chemin-sauveguarder-1:ro # \
-      - /chemin-sauveguarder-2://chemin-sauveguarder-2:ro #  Données à sauvegarder
-      - /chemin-sauveguarder-3://chemin-sauveguarder-3:ro # /
+      - /chemin-a-sauveguarder-1:/chemin-a-sauveguarder-1:ro # \
+      - /chemin-a-sauveguarder-2:/chemin-a-sauveguarder-2:ro #  Données à sauvegarder
+      - /chemin-a-sauveguarder-3:/chemin-a-sauveguarder-3:ro # /
     environment:
       - BACKREST_DATA=/data
       - BACKREST_CONFIG=/config/config.json
@@ -1234,7 +1234,7 @@ services:
 
 - Une fois le service lancé, accéder au GUI avec un navigateur sur le port `9898`
 - Créer un _Repo_ avec les paramètres du rest-server cible
-- Créer un _Plan_ avec les données à sauvegarder (dans les `/chemin-sauveguarder-x` définis dans notre compose)
+- Créer un _Plan_ avec les données à sauvegarder (dans les `/chemin-a-sauveguarder-x` définis dans notre compose)
 
 Plus d'infos sur le [Github](https://github.com/garethgeorge/backrest)
 
@@ -1246,7 +1246,7 @@ Exemple
 
 ```yml
 services:
-  rest:
+  rest-server:
     image: restic/rest-server
     container_name: rest-server
     restart: unless-stopped
